@@ -1,3 +1,9 @@
+"""
+Discord Bot: pookan-dspy (Slash Commands Version)
+Stock Recommendation using DSPy
+Self-contained implementation with slash commands
+"""
+
 import discord
 from discord.ext import commands
 import dspy
@@ -15,6 +21,11 @@ warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
 # Load environment variables
 load_dotenv()
+
+# Discord Bot Configuration
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
 # Configure DSPy with fallback mechanism: Anthropic first, OpenAI second
 def configure_dspy():
@@ -61,11 +72,6 @@ except Exception as e:
     print(f"❌ DSPy configuration failed: {e}")
     print("💡 Please check your API keys and try again")
     exit(1)
-
-# Discord bot setup
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
 @dataclass
 class StockData:
@@ -172,7 +178,7 @@ def get_stock_data(ticker: str) -> str:
         
         # Get volume
         volume = hist_data['Volume'].iloc[-1]
-        volume_str = f"{volume/1000000:.1f}M" if volume > 1000000 else f"{volume/1000:.1f}K"
+        volume_str = f"{volume:,}"
         
         # Calculate real RSI (14-period)
         def calculate_rsi(prices, period=14):
@@ -189,7 +195,7 @@ def get_stock_data(ticker: str) -> str:
         sma_5 = hist_data['Close'].rolling(window=5).mean().iloc[-1]
         sma_20 = hist_data['Close'].rolling(window=20).mean().iloc[-1]
         
-        stock_data = f"price={current_price:.2f}, change={change_str}, volume={volume_str}, RSI={rsi:.1f}, 5dma={sma_5:.2f}, 20dma={sma_20:.2f}"
+        stock_data = f"price={current_price:.2f}, change={change_str}, volume={volume_str}, volume_raw={volume}, RSI={rsi:.1f}, 5dma={sma_5:.2f}, 20dma={sma_20:.2f}"
         
         return stock_data
         
@@ -201,18 +207,26 @@ agent = StockRecommenderAgent()
 
 @bot.event
 async def on_ready():
-    """Called when the bot is ready"""
+    """Bot startup event"""
     print(f'🤖 {bot.user} has connected to Discord!')
-    print(f'📊 DSPy Stock Analysis Bot is ready!')
+    print(f'📊 DSPy Stock Bot (Slash Commands) is ready!')
     print(f'🤖 Provider: {provider.upper()}')
-    print(f'💡 Use !analyze <ticker> to analyze a stock')
-    print(f'💡 Use !stockhelp to see comprehensive help')
-    print(f'💡 Use !ping to test connectivity')
-    print(f'💡 Use !status to see bot configuration')
+    print(f'💬 Use /analyze <ticker> to get stock recommendations')
+    
+    # Register slash commands
+    try:
+        print("🔄 Registering slash commands...")
+        await bot.tree.sync()
+        print("✅ Slash commands registered successfully!")
+    except Exception as e:
+        print(f"❌ Failed to register slash commands: {e}")
 
-@bot.command(name='analyze')
-async def analyze_stock(ctx, ticker: str):
-    """Analyze a stock ticker and provide recommendation"""
+# Slash command handlers
+@bot.tree.command(name="analyze", description="Analyze any stock using DSPy framework")
+async def analyze_stock_slash(interaction: discord.Interaction, ticker: str):
+    """Slash command handler for stock analysis"""
+    await interaction.response.defer()
+    
     try:
         # Send initial message
         embed = discord.Embed(
@@ -221,7 +235,7 @@ async def analyze_stock(ctx, ticker: str):
             color=0x00ff00
         )
         embed.add_field(name="Status", value="🔄 Fetching data and analyzing...", inline=False)
-        message = await ctx.send(embed=embed)
+        message = await interaction.followup.send(embed=embed)
         
         # Get stock data
         stock_data = get_stock_data(ticker)
@@ -229,60 +243,130 @@ async def analyze_stock(ctx, ticker: str):
         # Update message with data
         embed.description = f"Analyzing **{ticker.upper()}**\n\n**Stock Data:**\n`{stock_data}`"
         embed.set_field_at(0, name="Status", value="🤖 Generating AI recommendation...", inline=False)
-        await message.edit(embed=embed)
         
         # Get recommendation
         result = agent(stock_data)
         
-        # Create final embed
+        # Create detailed response embed
         embed = discord.Embed(
-            title=f"📈 Stock Analysis: {ticker.upper()}",
-            description=f"**Stock Data:**\n`{stock_data}`",
-            color=0x0099ff
+            title=f"📊 {ticker.upper()} Stock Analysis - DSPy",
+            description="Analysis completed using DSPy modular AI framework",
+            color=0x00ff00
         )
         
-        # Add recommendation
-        recommendation_color = 0x00ff00 if "buy" in result['recommendation'].lower() or "recommend" in result['recommendation'].lower() else 0xff9900
-        embed.color = recommendation_color
+        # Add market data
+        try:
+            price_str = stock_data.split('price=')[1].split(',')[0]
+            change_str = stock_data.split('change=')[1].split(',')[0]
+            volume_str = stock_data.split('volume_raw=')[1].split(',')[0]
+            
+            embed.add_field(
+                name="💰 Current Price", 
+                value=f"${float(price_str):.2f}", 
+                inline=True
+            )
+            embed.add_field(
+                name="📈 Change", 
+                value=change_str, 
+                inline=True
+            )
+            embed.add_field(
+                name="📊 Volume", 
+                value=volume_str, 
+                inline=True
+            )
+        except:
+            embed.add_field(
+                name="💰 Current Price", 
+                value="N/A", 
+                inline=True
+            )
+            embed.add_field(
+                name="📈 Change", 
+                value="N/A", 
+                inline=True
+            )
+            embed.add_field(
+                name="📊 Volume", 
+                value="N/A", 
+                inline=True
+            )
         
-        # Truncate fields to fit Discord's 1024 character limit
+        # Add recommendation details
         recommendation = result['recommendation'][:1024] if len(result['recommendation']) > 1024 else result['recommendation']
         reasoning = result['reasoning'][:1024] if len(result['reasoning']) > 1024 else result['reasoning']
         explanation = result['explanation'][:1024] if len(result['explanation']) > 1024 else result['explanation']
         
+        # Determine recommendation type and confidence
+        rec_lower = result['recommendation'].lower()
+        if "buy" in rec_lower:
+            recommendation_type = "BUY"
+            confidence = "High" if "strong" in rec_lower or "recommend" in rec_lower else "Medium"
+        elif "sell" in rec_lower:
+            recommendation_type = "SELL"
+            confidence = "High" if "strong" in rec_lower else "Medium"
+        else:
+            recommendation_type = "HOLD"
+            confidence = "Medium"
+        
         embed.add_field(
             name="🎯 Recommendation", 
-            value=recommendation, 
-            inline=False
+            value=recommendation_type, 
+            inline=True
         )
-        
         embed.add_field(
-            name="🧠 Reasoning", 
-            value=reasoning, 
-            inline=False
+            name="📊 Confidence", 
+            value=confidence, 
+            inline=True
         )
-        
         embed.add_field(
-            name="📝 Explanation", 
-            value=explanation, 
-            inline=False
-        )
-        
-        embed.add_field(
-            name="🤖 AI Provider", 
-            value=provider.upper(), 
+            name="⚠️ Risk Level", 
+            value="Medium", 
             inline=True
         )
         
+        # Add recommendation details
+        if recommendation:
+            embed.add_field(
+                name="📋 Recommendation Details", 
+                value=recommendation, 
+                inline=False
+            )
+        
+        # Add reasoning
+        if reasoning:
+            embed.add_field(
+                name="💭 Reasoning", 
+                value=reasoning, 
+                inline=False
+            )
+        
+        # Add explanation
+        if explanation:
+            embed.add_field(
+                name="📖 Explanation", 
+                value=explanation, 
+                inline=False
+            )
+        
+        # Add workflow status and framework info
+        embed.add_field(
+            name="🔄 Workflow Status", 
+            value="Completed", 
+            inline=True
+        )
         embed.add_field(
             name="⚡ Framework", 
             value="DSPy AI", 
             inline=True
         )
+        embed.add_field(
+            name="⏰ Completed", 
+            value=datetime.now().strftime("%H:%M:%S"), 
+            inline=True
+        )
         
-        # Add footer
-        embed.set_footer(text=f"Real-time data from Yahoo Finance • Powered by {provider.upper()}")
-        
+        embed.set_footer(text=f"pookan-dspy • {provider.upper()} • Real-time market data")
         await message.edit(embed=embed)
         
     except Exception as e:
@@ -291,11 +375,11 @@ async def analyze_stock(ctx, ticker: str):
             description=f"Failed to analyze {ticker.upper()}: {str(e)}",
             color=0xff0000
         )
-        await ctx.send(embed=error_embed)
+        await interaction.followup.send(embed=error_embed)
 
-@bot.command(name='stockhelp')
-async def help_command(ctx):
-    """Show comprehensive help information"""
+@bot.tree.command(name="help", description="Show comprehensive help information")
+async def help_command_slash(interaction: discord.Interaction):
+    """Slash command handler for help information"""
     embed = discord.Embed(
         title="🤖 DSPy Stock Analysis Bot - Help Guide",
         description="**AI-powered stock analysis using DSPy framework and real-time market data**\n\nThis bot provides instant stock analysis with AI recommendations using the latest market data.",
@@ -306,10 +390,10 @@ async def help_command(ctx):
     embed.add_field(
         name="📊 **Basic Commands**",
         value="""
-`!analyze <ticker>` - Analyze any stock (e.g., `!analyze MSFT`)
-`!ping` - Test bot connectivity
-`!status` - Show bot status and configuration
-`!stockhelp` - Show this help message
+`/analyze <ticker>` - Analyze any stock (e.g., `/analyze MSFT`)
+`/ping` - Test bot connectivity
+`/status` - Show bot status and configuration
+`/help` - Show this help message
         """,
         inline=False
     )
@@ -318,10 +402,10 @@ async def help_command(ctx):
     embed.add_field(
         name="💡 **Usage Examples**",
         value="""
-• `!analyze AAPL` - Analyze Apple stock
-• `!analyze TSLA` - Analyze Tesla stock  
-• `!analyze GOOGL` - Analyze Google stock
-• `!analyze NVDA` - Analyze NVIDIA stock
+• `/analyze AAPL` - Analyze Apple stock
+• `/analyze TSLA` - Analyze Tesla stock  
+• `/analyze GOOGL` - Analyze Google stock
+• `/analyze NVDA` - Analyze NVIDIA stock
         """,
         inline=False
     )
@@ -367,11 +451,11 @@ async def help_command(ctx):
     )
     
     embed.set_footer(text=f"DSPy Bot • {provider.upper()} • Real-time market data")
-    await ctx.send(embed=embed)
+    await interaction.response.send_message(embed=embed)
 
-@bot.command(name='ping')
-async def ping(ctx):
-    """Check bot latency"""
+@bot.tree.command(name="ping", description="Test bot connectivity")
+async def ping_slash(interaction: discord.Interaction):
+    """Slash command handler for ping"""
     embed = discord.Embed(
         title="🏓 Pong!",
         description=f"Bot latency: {round(bot.latency * 1000)}ms",
@@ -380,13 +464,13 @@ async def ping(ctx):
     embed.add_field(name="🤖 Bot", value="DSPy Stock Analysis Bot", inline=True)
     embed.add_field(name="⚡ Framework", value="DSPy AI", inline=True)
     embed.add_field(name="🤖 Provider", value=provider.upper(), inline=True)
-    embed.add_field(name="💡 Quick Start", value="Try `!analyze MSFT` to test!", inline=True)
+    embed.add_field(name="💡 Quick Start", value="Try `/analyze MSFT` to test!", inline=True)
     embed.set_footer(text=f"Real-time data from Yahoo Finance • Powered by {provider.upper()}")
-    await ctx.send(embed=embed)
+    await interaction.response.send_message(embed=embed)
 
-@bot.command(name='welcome')
-async def welcome(ctx):
-    """Show welcome message and quick start guide"""
+@bot.tree.command(name="welcome", description="Show welcome message and quick start guide")
+async def welcome_slash(interaction: discord.Interaction):
+    """Slash command handler for welcome"""
     embed = discord.Embed(
         title="🤖 Welcome to DSPy Stock Analysis Bot!",
         description="**AI-powered stock analysis using DSPy framework**\n\nGet instant stock analysis with real-time market data and AI recommendations.",
@@ -397,10 +481,10 @@ async def welcome(ctx):
         name="🚀 **Quick Start**",
         value="""
 Try these commands to get started:
-• `!analyze MSFT` - Analyze Microsoft stock
-• `!analyze AAPL` - Analyze Apple stock
-• `!stockhelp` - See all commands and features
-• `!status` - Check bot configuration
+• `/analyze MSFT` - Analyze Microsoft stock
+• `/analyze AAPL` - Analyze Apple stock
+• `/help` - See all commands and features
+• `/status` - Check bot configuration
         """,
         inline=False
     )
@@ -424,11 +508,11 @@ Try these commands to get started:
     )
     
     embed.set_footer(text=f"DSPy Bot • {provider.upper()} • Ready for analysis!")
-    await ctx.send(embed=embed)
+    await interaction.response.send_message(embed=embed)
 
-@bot.command(name='status')
-async def status_command(ctx):
-    """Show bot status and provider information"""
+@bot.tree.command(name="status", description="Show bot status and configuration")
+async def status_command_slash(interaction: discord.Interaction):
+    """Slash command handler for status"""
     embed = discord.Embed(
         title="🤖 DSPy Stock Bot Status",
         description="Bot is running and ready for stock analysis",
@@ -467,12 +551,12 @@ async def status_command(ctx):
     
     embed.add_field(
         name="💡 Commands",
-        value="!analyze, !stockhelp, !ping, !status",
+        value="/analyze, /help, /ping, /welcome, /status",
         inline=True
     )
     
     embed.set_footer(text=f"DSPy AI • {provider.upper()} • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    await ctx.send(embed=embed)
+    await interaction.response.send_message(embed=embed)
 
 def main():
     """Run the Discord bot"""
@@ -486,11 +570,19 @@ def main():
         print(f"   - OPENAI_API_KEY: {'Set' if os.getenv('OPENAI_API_KEY') else 'Not set'}")
         return
     
-    print("🚀 Starting Discord Stock Recommendation Bot...")
+    print("🚀 Starting DSPy Discord Stock Recommendation Bot...")
     print("📊 Bot will be ready to analyze stocks!")
     print(f"✅ Environment variables loaded successfully")
     print(f"🤖 Provider: {provider.upper()}")
-    bot.run(token)
+    print(f"💡 Use /analyze <ticker> to analyze a stock")
+    print(f"💡 Use /help to see comprehensive help")
+    print(f"💡 Use /ping to test connectivity")
+    print(f"💡 Use /status to see bot configuration")
+    
+    try:
+        bot.run(token)
+    except Exception as e:
+        print(f"❌ Failed to start bot: {e}")
 
 if __name__ == "__main__":
-    main() 
+    main()
