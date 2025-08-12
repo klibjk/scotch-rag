@@ -56,3 +56,5 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+*.pem
