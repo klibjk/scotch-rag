@@ -1,0 +1,314 @@
+[
+  {
+    "type": "SheetCard",
+    "scope": "sheet",
+    "ids": {
+      "file_id": "finance",
+      "sheet_id": "expenses"
+    },
+    "text": "Sheet 'expenses' in file 'finance' contains 7 rows and 2 columns.",
+    "facets": {
+      "n_rows": 7,
+      "n_columns": 2
+    }
+  },
+  {
+    "type": "TableCard",
+    "scope": "table",
+    "ids": {
+      "file_id": "finance",
+      "sheet_id": "expenses",
+      "table_id": "finance_expenses"
+    },
+    "text": "Table 'finance_expenses' from sheet 'expenses' in file 'finance'.",
+    "facets": {
+      "n_rows": 7,
+      "n_columns": 2
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "finance",
+      "sheet_id": "expenses",
+      "table_id": "finance_expenses",
+      "column_id": "c_date"
+    },
+    "text": "Column 'date' in table 'finance_expenses' (sheet 'expenses', file 'finance').",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "2025-08-10",
+        "2025-08-11",
+        "2025-08-12"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "finance",
+      "sheet_id": "expenses",
+      "table_id": "finance_expenses",
+      "column_id": "c_category"
+    },
+    "text": "Column 'category' in table 'finance_expenses' (sheet 'expenses', file 'finance').",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "Travel",
+        "Supplies",
+        "Meals"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "finance",
+      "sheet_id": "expenses",
+      "table_id": "finance_expenses",
+      "column_id": "c_amount"
+    },
+    "text": "Net amount in THB after discounts (if applicable) in column 'amount' of table 'finance_expenses'.",
+    "facets": {
+      "dtype": "Float64",
+      "examples": [
+        "-120.5",
+        "-45.0",
+        "-30.25"
+      ],
+      "unit": "THB"
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "finance",
+      "sheet_id": "expenses",
+      "table_id": "finance_expenses",
+      "column_id": "c_description"
+    },
+    "text": "Column 'description' in table 'finance_expenses' (sheet 'expenses', file 'finance').",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "Flight to NYC",
+        "Printer ink",
+        "Team lunch"
+      ]
+    }
+  },
+  {
+    "type": "SheetCard",
+    "scope": "sheet",
+    "ids": {
+      "file_id": "finance",
+      "sheet_id": "revenue"
+    },
+    "text": "Sheet 'revenue' in file 'finance' contains 7 rows and 2 columns.",
+    "facets": {
+      "n_rows": 7,
+      "n_columns": 2
+    }
+  },
+  {
+    "type": "TableCard",
+    "scope": "table",
+    "ids": {
+      "file_id": "finance",
+      "sheet_id": "revenue",
+      "table_id": "finance_revenue"
+    },
+    "text": "Table 'finance_revenue' from sheet 'revenue' in file 'finance'.",
+    "facets": {
+      "n_rows": 7,
+      "n_columns": 2
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "finance",
+      "sheet_id": "revenue",
+      "table_id": "finance_revenue",
+      "column_id": "c_date"
+    },
+    "text": "Column 'date' in table 'finance_revenue' (sheet 'revenue', file 'finance').",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "2025-08-10",
+        "2025-08-11",
+        "2025-08-12"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "finance",
+      "sheet_id": "revenue",
+      "table_id": "finance_revenue",
+      "column_id": "c_source"
+    },
+    "text": "Column 'source' in table 'finance_revenue' (sheet 'revenue', file 'finance').",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "Sales",
+        "Consulting",
+        "Investment"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "finance",
+      "sheet_id": "revenue",
+      "table_id": "finance_revenue",
+      "column_id": "c_amount"
+    },
+    "text": "Net amount in THB after discounts (if applicable) in column 'amount' of table 'finance_revenue'.",
+    "facets": {
+      "dtype": "Int64",
+      "examples": [
+        "5000",
+        "1200",
+        "4500"
+      ],
+      "unit": "THB"
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "finance",
+      "sheet_id": "revenue",
+      "table_id": "finance_revenue",
+      "column_id": "c_description"
+    },
+    "text": "Column 'description' in table 'finance_revenue' (sheet 'revenue', file 'finance').",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "Product sale",
+        "Client project",
+        "Online order"
+      ]
+    }
+  },
+  {
+    "type": "SheetCard",
+    "scope": "sheet",
+    "ids": {
+      "file_id": "sample",
+      "sheet_id": "sheet1"
+    },
+    "text": "Sheet 'sheet1' in file 'sample' contains 10 rows and 2 columns.",
+    "facets": {
+      "n_rows": 10,
+      "n_columns": 2
+    }
+  },
+  {
+    "type": "TableCard",
+    "scope": "table",
+    "ids": {
+      "file_id": "sample",
+      "sheet_id": "sheet1",
+      "table_id": "sample_sheet1"
+    },
+    "text": "Table 'sample_sheet1' from sheet 'sheet1' in file 'sample'.",
+    "facets": {
+      "n_rows": 10,
+      "n_columns": 2
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "sample",
+      "sheet_id": "sheet1",
+      "table_id": "sample_sheet1",
+      "column_id": "c_txn_id"
+    },
+    "text": "Column 'txn_id' in table 'sample_sheet1' (sheet 'sheet1', file 'sample').",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "TXN001",
+        "TXN002",
+        "TXN003"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "sample",
+      "sheet_id": "sheet1",
+      "table_id": "sample_sheet1",
+      "column_id": "c_date"
+    },
+    "text": "Column 'date' in table 'sample_sheet1' (sheet 'sheet1', file 'sample').",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "2025-08-16",
+        "2025-08-15",
+        "2025-08-14"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "sample",
+      "sheet_id": "sheet1",
+      "table_id": "sample_sheet1",
+      "column_id": "c_amount"
+    },
+    "text": "Net amount in THB after discounts (if applicable) in column 'amount' of table 'sample_sheet1'.",
+    "facets": {
+      "dtype": "Int64",
+      "examples": [
+        "1000",
+        "-200",
+        "500"
+      ],
+      "unit": "THB"
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "sample",
+      "sheet_id": "sheet1",
+      "table_id": "sample_sheet1",
+      "column_id": "c_description"
+    },
+    "text": "Column 'description' in table 'sample_sheet1' (sheet 'sheet1', file 'sample').",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "Payment received",
+        "Refund issued",
+        "Invoice paid"
+      ]
+    }
+  }
+]

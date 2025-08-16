@@ -1,0 +1,50 @@
+[
+  {
+    "file_id": "finance",
+    "sheet_id": "expenses",
+    "table_id": "finance_expenses",
+    "parquet_path": "data/finance_expenses.parquet",
+    "columns": [
+      "date",
+      "category",
+      "amount",
+      "description",
+      "row_index_original",
+      "file_id",
+      "sheet_id",
+      "table_id"
+    ]
+  },
+  {
+    "file_id": "finance",
+    "sheet_id": "revenue",
+    "table_id": "finance_revenue",
+    "parquet_path": "data/finance_revenue.parquet",
+    "columns": [
+      "date",
+      "source",
+      "amount",
+      "description",
+      "row_index_original",
+      "file_id",
+      "sheet_id",
+      "table_id"
+    ]
+  },
+  {
+    "file_id": "sample",
+    "sheet_id": "sheet1",
+    "table_id": "sample_sheet1",
+    "parquet_path": "data/sample_sheet1.parquet",
+    "columns": [
+      "txn_id",
+      "date",
+      "amount",
+      "description",
+      "row_index_original",
+      "file_id",
+      "sheet_id",
+      "table_id"
+    ]
+  }
+]
