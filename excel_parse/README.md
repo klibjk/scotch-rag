@@ -65,17 +65,17 @@ excel_parse/
 ### Mermaid Architecture Diagram
 ```mermaid
 flowchart LR
-  A[Excel .xlsx] --> B[Normalize → Arrow/Parquet]
-  B --> C[StructuredStore (DuckDB)]
-  B --> D[CardCatalog (Sheet/Column/Table cards)]
-  D --> E[SemanticIndex (BM25 + Vectors + Rerank)]
-  U[User Question] --> R[Router]
+  A["Excel .xlsx"] --> B["Normalize → Arrow/Parquet"]
+  B --> C["StructuredStore (DuckDB)"]
+  B --> D["CardCatalog (Sheet/Column/Table cards)"]
+  D --> E["SemanticIndex (BM25 + Vectors + Rerank)"]
+  U["User Question"] --> R["Router"]
   R -->|Exploratory| E
-  R -->|Analytic/Mixed| P[Planner → QueryPlan]
+  R -->|Analytic/Mixed| P["Planner → QueryPlan"]
   E --> P
-  P --> X[Executor on StructuredStore]
-  X --> O[Result + Provenance]
-  O --> S[Answer Synthesizer (LLM)]
+  P --> X["Executor on StructuredStore"]
+  X --> O["Result + Provenance"]
+  O --> S["Answer Synthesizer (LLM)"]
   S --> U
 ```
 
@@ -160,7 +160,3 @@ python src/agent.py "I want latest transaction show me only 1"
 - **JSON extraction**: The planner robustly extracts JSON from LLM output, but you can further tune prompts for stricter output.
 - **DuckDB errors**: Ensure your Parquet files are valid and match the expected schema.
 
----
-
-## License
-MIT
