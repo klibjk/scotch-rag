@@ -1,0 +1,580 @@
+[
+  {
+    "type": "SheetCard",
+    "scope": "sheet",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "orders"
+    },
+    "text": "Sheet 'orders' in file 'accounts_orders' contains 3 rows and 7 columns.",
+    "facets": {
+      "n_rows": 3,
+      "n_columns": 7
+    }
+  },
+  {
+    "type": "TableCard",
+    "scope": "table",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "orders",
+      "table_id": "accounts_orders_orders"
+    },
+    "text": "Table 'accounts_orders_orders' from sheet 'orders' in file 'accounts_orders'.",
+    "facets": {
+      "n_rows": 3,
+      "n_columns": 7
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "orders",
+      "table_id": "accounts_orders_orders",
+      "column_id": "c_order_id"
+    },
+    "text": "Unique order identifier for tracking and referencing individual trade orders. Possible values: O1001, O1002, O1003.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "O1001",
+        "O1002",
+        "O1003"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "orders",
+      "table_id": "accounts_orders_orders",
+      "column_id": "c_account_id"
+    },
+    "text": "Account identifier. Links orders to accounts and used for balance tracking. Possible values: A001, A002.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "A001",
+        "A002"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "orders",
+      "table_id": "accounts_orders_orders",
+      "column_id": "c_security"
+    },
+    "text": "Security symbol or code (e.g., stock or ETF) involved in the order. Possible values: ETF-ABC, STOCK-XYZ.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "ETF-ABC",
+        "STOCK-XYZ"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "orders",
+      "table_id": "accounts_orders_orders",
+      "column_id": "c_order_type"
+    },
+    "text": "Type of order: 'buy' for purchase, 'sell' for sale. Determines trade direction. Possible values: buy, sell.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "buy",
+        "sell"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "orders",
+      "table_id": "accounts_orders_orders",
+      "column_id": "c_quantity"
+    },
+    "text": "Number of units (shares, lots, etc.) involved in the order.",
+    "facets": {
+      "dtype": "Int64",
+      "examples": [
+        "100",
+        "50",
+        "20"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "orders",
+      "table_id": "accounts_orders_orders",
+      "column_id": "c_price"
+    },
+    "text": "Order price per unit of security. Used to calculate total transaction value.",
+    "facets": {
+      "dtype": "Float64",
+      "examples": [
+        "50.25",
+        "120.5",
+        "51.0"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "orders",
+      "table_id": "accounts_orders_orders",
+      "column_id": "c_status"
+    },
+    "text": "Current status of the order (e.g., pending, filled, cancelled). Possible values: pending, filled, cancelled.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "pending",
+        "filled",
+        "cancelled"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "orders",
+      "table_id": "accounts_orders_orders",
+      "column_id": "c_placed_time"
+    },
+    "text": "Timestamp when the order was placed.",
+    "facets": {
+      "dtype": "datetime64[ns]",
+      "examples": [
+        "2024-06-01 10:00:00",
+        "2024-06-01 09:30:00",
+        "2024-06-01 11:00:00"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "orders",
+      "table_id": "accounts_orders_orders",
+      "column_id": "c_executed_time"
+    },
+    "text": "Timestamp when the order was executed (if filled).",
+    "facets": {
+      "dtype": "datetime64[ns]",
+      "examples": [
+        "2024-06-01 09:45:00"
+      ]
+    }
+  },
+  {
+    "type": "SheetCard",
+    "scope": "sheet",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "accounts"
+    },
+    "text": "Sheet 'accounts' in file 'accounts_orders' contains 2 rows and 2 columns.",
+    "facets": {
+      "n_rows": 2,
+      "n_columns": 2
+    }
+  },
+  {
+    "type": "TableCard",
+    "scope": "table",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "accounts",
+      "table_id": "accounts_orders_accounts"
+    },
+    "text": "Table 'accounts_orders_accounts' from sheet 'accounts' in file 'accounts_orders'.",
+    "facets": {
+      "n_rows": 2,
+      "n_columns": 2
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "accounts",
+      "table_id": "accounts_orders_accounts",
+      "column_id": "c_account_id"
+    },
+    "text": "Account identifier. Links orders to accounts and used for balance tracking. Possible values: A001, A002.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "A001",
+        "A002"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "accounts",
+      "table_id": "accounts_orders_accounts",
+      "column_id": "c_owner"
+    },
+    "text": "Name of the account owner. Possible values: Alice, Bob.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "Alice",
+        "Bob"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "accounts",
+      "table_id": "accounts_orders_accounts",
+      "column_id": "c_account_type"
+    },
+    "text": "Type of account (e.g., individual, joint, retirement). Possible values: individual, retirement.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "individual",
+        "retirement"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "accounts_orders",
+      "sheet_id": "accounts",
+      "table_id": "accounts_orders_accounts",
+      "column_id": "c_balance"
+    },
+    "text": "Current account balance in THB.",
+    "facets": {
+      "dtype": "Int64",
+      "examples": [
+        "10000",
+        "25000"
+      ]
+    }
+  },
+  {
+    "type": "SheetCard",
+    "scope": "sheet",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "securities"
+    },
+    "text": "Sheet 'securities' in file 'securities_info' contains 3 rows and 3 columns.",
+    "facets": {
+      "n_rows": 3,
+      "n_columns": 3
+    }
+  },
+  {
+    "type": "TableCard",
+    "scope": "table",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "securities",
+      "table_id": "securities_info_securities"
+    },
+    "text": "Table 'securities_info_securities' from sheet 'securities' in file 'securities_info'.",
+    "facets": {
+      "n_rows": 3,
+      "n_columns": 3
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "securities",
+      "table_id": "securities_info_securities",
+      "column_id": "c_security_id"
+    },
+    "text": "Column 'security_id' in table 'securities_info_securities' (sheet 'securities', file 'securities_info'). Possible values: ETF-ABC, STOCK-XYZ, ETF-DEF.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "ETF-ABC",
+        "STOCK-XYZ",
+        "ETF-DEF"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "securities",
+      "table_id": "securities_info_securities",
+      "column_id": "c_name"
+    },
+    "text": "Full name of the security (stock, ETF, etc.). Possible values: Growth ETF, XYZ Corp, Stable ETF.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "Growth ETF",
+        "XYZ Corp",
+        "Stable ETF"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "securities",
+      "table_id": "securities_info_securities",
+      "column_id": "c_type"
+    },
+    "text": "Type/category of the security (e.g., stock, ETF). Possible values: ETF, stock.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "ETF",
+        "stock"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "securities",
+      "table_id": "securities_info_securities",
+      "column_id": "c_current_price"
+    },
+    "text": "Latest available price for the security.",
+    "facets": {
+      "dtype": "Float64",
+      "examples": [
+        "50.5",
+        "120.0",
+        "40.0"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "securities",
+      "table_id": "securities_info_securities",
+      "column_id": "c_risk_level"
+    },
+    "text": "Risk profile of the security (e.g., growth, stability). Possible values: growth, stability.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "growth",
+        "stability"
+      ]
+    }
+  },
+  {
+    "type": "SheetCard",
+    "scope": "sheet",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "holdings"
+    },
+    "text": "Sheet 'holdings' in file 'securities_info' contains 4 rows and 1 columns.",
+    "facets": {
+      "n_rows": 4,
+      "n_columns": 1
+    }
+  },
+  {
+    "type": "TableCard",
+    "scope": "table",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "holdings",
+      "table_id": "securities_info_holdings"
+    },
+    "text": "Table 'securities_info_holdings' from sheet 'holdings' in file 'securities_info'.",
+    "facets": {
+      "n_rows": 4,
+      "n_columns": 1
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "holdings",
+      "table_id": "securities_info_holdings",
+      "column_id": "c_etf_id"
+    },
+    "text": "Column 'etf_id' in table 'securities_info_holdings' (sheet 'holdings', file 'securities_info'). Possible values: ETF-ABC, ETF-DEF.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "ETF-ABC",
+        "ETF-DEF"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "holdings",
+      "table_id": "securities_info_holdings",
+      "column_id": "c_holding_security"
+    },
+    "text": "Constituent security held within an ETF. Possible values: STOCK-XYZ, STOCK-123, STOCK-456.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "STOCK-XYZ",
+        "STOCK-123",
+        "STOCK-456"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "holdings",
+      "table_id": "securities_info_holdings",
+      "column_id": "c_weight_percent"
+    },
+    "text": "Percentage weight of the holding in the ETF portfolio.",
+    "facets": {
+      "dtype": "Int64",
+      "examples": [
+        "60",
+        "40",
+        "30"
+      ]
+    }
+  },
+  {
+    "type": "SheetCard",
+    "scope": "sheet",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "fees"
+    },
+    "text": "Sheet 'fees' in file 'securities_info' contains 3 rows and 1 columns.",
+    "facets": {
+      "n_rows": 3,
+      "n_columns": 1
+    }
+  },
+  {
+    "type": "TableCard",
+    "scope": "table",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "fees",
+      "table_id": "securities_info_fees"
+    },
+    "text": "Table 'securities_info_fees' from sheet 'fees' in file 'securities_info'.",
+    "facets": {
+      "n_rows": 3,
+      "n_columns": 1
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "fees",
+      "table_id": "securities_info_fees",
+      "column_id": "c_security_id"
+    },
+    "text": "Column 'security_id' in table 'securities_info_fees' (sheet 'fees', file 'securities_info'). Possible values: ETF-ABC, STOCK-XYZ.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "ETF-ABC",
+        "STOCK-XYZ"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "fees",
+      "table_id": "securities_info_fees",
+      "column_id": "c_fee_type"
+    },
+    "text": "Type of fee (e.g., management, commission) associated with the security. Possible values: management, commission.",
+    "facets": {
+      "dtype": "string",
+      "examples": [
+        "management",
+        "commission"
+      ]
+    }
+  },
+  {
+    "type": "ColumnCard",
+    "scope": "column",
+    "ids": {
+      "file_id": "securities_info",
+      "sheet_id": "fees",
+      "table_id": "securities_info_fees",
+      "column_id": "c_amount"
+    },
+    "text": "Net amount in THB. Negative values indicate outflows (e.g., purchases), positive values indicate inflows (e.g., sales or credits). Used for settlement and balance updates. Values are in THB.",
+    "facets": {
+      "dtype": "Float64",
+      "examples": [
+        "0.5",
+        "1.0",
+        "1.5"
+      ],
+      "unit": "THB"
+    }
+  }
+]

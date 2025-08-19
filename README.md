@@ -337,4 +337,56 @@ For issues and questions:
 
 ---
 
-**Happy Trading! 📈🤖**
+graph TD
+
+    25["Discord API<br>External Service"]
+    26["DSPy Library<br>External Library"]
+    27["Langchain Library<br>External Library"]
+    28["Langgraph Library<br>External Library"]
+    7["User<br>External Actor"]
+    subgraph 1["Pydantic Validation Extensions<br>Python, Pydantic"]
+        23["Langchain Bot (Pydantic)<br>Python, Pydantic"]
+        24["Langgraph Bot (Pydantic)<br>Python, Pydantic"]
+    end
+    subgraph 2["Excel Data Processing System<br>Python"]
+        20["Semantic Indexing<br>Python"]
+        21["Profiling<br>Python"]
+        22["Cards<br>Python"]
+        subgraph 3["Agent &amp; Routing<br>Python"]
+            18["Agent<br>Python"]
+            19["Router<br>Python"]
+        end
+        subgraph 4["Query Planning &amp; Execution<br>Python"]
+            15["Planner<br>Python"]
+            16["Query Plan Schema<br>Python"]
+            17["Executor<br>Python"]
+        end
+        subgraph 5["Data Ingestion &amp; Storage<br>Python"]
+            12["Ingest Module<br>Python"]
+            13["Store Module<br>Python"]
+            14["Data Directory<br>Filesystem"]
+            %% Edges at this level (grouped by source)
+            14["Data Directory<br>Filesystem"] -->|provides data to| 12["Ingest Module<br>Python"]
+        end
+        %% Edges at this level (grouped by source)
+        3["Agent &amp; Routing<br>Python"] -->|orchestrates| 4["Query Planning &amp; Execution<br>Python"]
+        4["Query Planning &amp; Execution<br>Python"] -->|accesses| 5["Data Ingestion &amp; Storage<br>Python"]
+        4["Query Planning &amp; Execution<br>Python"] -->|queries| 20["Semantic Indexing<br>Python"]
+        5["Data Ingestion &amp; Storage<br>Python"] -->|populates| 20["Semantic Indexing<br>Python"]
+        12["Ingest Module<br>Python"] -->|uses| 22["Cards<br>Python"]
+        17["Executor<br>Python"] -->|uses| 22["Cards<br>Python"]
+    end
+    subgraph 6["Discord Bot Implementations<br>Python"]
+        10["Langgraph Bot<br>Python, Langgraph"]
+        11["Multi-Langchain Bot<br>Python, Langchain"]
+        8["DSPy Bot<br>Python, DSPy"]
+        9["Langchain Bot<br>Python, Langchain"]
+    end
+    %% Edges at this level (grouped by source)
+    7["User<br>External Actor"] -->|interacts with| 2["Excel Data Processing System<br>Python"]
+    7["User<br>External Actor"] -->|interacts with| 6["Discord Bot Implementations<br>Python"]
+    1["Pydantic Validation Extensions<br>Python, Pydantic"] -->|extends| 6["Discord Bot Implementations<br>Python"]
+    6["Discord Bot Implementations<br>Python"] -->|uses| 25["Discord API<br>External Service"]
+    6["Discord Bot Implementations<br>Python"] -->|uses| 26["DSPy Library<br>External Library"]
+    6["Discord Bot Implementations<br>Python"] -->|uses| 27["Langchain Library<br>External Library"]
+    6["Discord Bot Implementations<br>Python"] -->|uses| 28["Langgraph Library<br>External Library"]

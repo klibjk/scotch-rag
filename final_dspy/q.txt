@@ -1,0 +1,30 @@
+What is the status of order O1001?
+What does the ETF-ABC hold inside?
+List all orders for account A002.
+What are the management fees for ETF-ABC?
+Which account has the highest balance?
+
+Which account has placed the most buy orders for ETF-ABC?
+For each account, what is the total value of all filled orders?
+Who owns the account with the highest balance, and what is their most recent order?
+Which security has the highest management fee, and what is its risk level?
+List all orders that were placed but never executed.
+
+For each ETF, list its holdings and the weight percent of each holding.
+Which securities are held by more than one ETF?
+For each order, show the account owner and the security’s current price.
+What is the average order quantity for each security type (stock vs ETF)?
+
+What are the possible statuses for an order, and what do they mean?
+Explain the difference between management and commission fees in this dataset.
+What does the column 'risk_level' represent, and what are its possible values?
+Which columns in the orders table are most important for tracking trade execution?
+
+Which ETF would you recommend for someone seeking stability, and why?
+Compare the fees and risk levels of ETF-ABC and ETF-DEF.
+Which security has the best growth potential based on current data?
+
+I want to invest in something stable. What are my options?
+Show me all my pending orders and tell me if I can still cancel them.
+What’s the cheapest security I can buy right now?
+Are there any accounts with a negative balance?

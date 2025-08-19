@@ -1,0 +1,86 @@
+[
+  {
+    "file_id": "accounts_orders",
+    "sheet_id": "orders",
+    "table_id": "accounts_orders_orders",
+    "parquet_path": "data/accounts_orders_orders.parquet",
+    "columns": [
+      "order_id",
+      "account_id",
+      "security",
+      "order_type",
+      "quantity",
+      "price",
+      "status",
+      "placed_time",
+      "executed_time",
+      "row_index_original",
+      "file_id",
+      "sheet_id",
+      "table_id"
+    ]
+  },
+  {
+    "file_id": "accounts_orders",
+    "sheet_id": "accounts",
+    "table_id": "accounts_orders_accounts",
+    "parquet_path": "data/accounts_orders_accounts.parquet",
+    "columns": [
+      "account_id",
+      "owner",
+      "account_type",
+      "balance",
+      "row_index_original",
+      "file_id",
+      "sheet_id",
+      "table_id"
+    ]
+  },
+  {
+    "file_id": "securities_info",
+    "sheet_id": "securities",
+    "table_id": "securities_info_securities",
+    "parquet_path": "data/securities_info_securities.parquet",
+    "columns": [
+      "security_id",
+      "name",
+      "type",
+      "current_price",
+      "risk_level",
+      "row_index_original",
+      "file_id",
+      "sheet_id",
+      "table_id"
+    ]
+  },
+  {
+    "file_id": "securities_info",
+    "sheet_id": "holdings",
+    "table_id": "securities_info_holdings",
+    "parquet_path": "data/securities_info_holdings.parquet",
+    "columns": [
+      "etf_id",
+      "holding_security",
+      "weight_percent",
+      "row_index_original",
+      "file_id",
+      "sheet_id",
+      "table_id"
+    ]
+  },
+  {
+    "file_id": "securities_info",
+    "sheet_id": "fees",
+    "table_id": "securities_info_fees",
+    "parquet_path": "data/securities_info_fees.parquet",
+    "columns": [
+      "security_id",
+      "fee_type",
+      "amount",
+      "row_index_original",
+      "file_id",
+      "sheet_id",
+      "table_id"
+    ]
+  }
+]
