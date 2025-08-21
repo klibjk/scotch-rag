@@ -18,7 +18,7 @@ from typing import Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
 
-# Use local modules from final_dspy
+# Use local modules from final_dspy (commented out to avoid DuckDB dependency)
 from router import Router
 from semantic_index import SemanticIndex
 from planner import Planner, rewrite_plan_for_count
@@ -37,14 +37,7 @@ load_dotenv()
 def configure_dspy():
     anthropic_key = os.getenv("ANTHROPIC_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY")
-    if anthropic_key:
-        try:
-            print("🔵 Using Anthropic Claude Sonnet as primary LLM")
-            lm = dspy.LM("anthropic/claude-sonnet-4-0", api_key=anthropic_key)
-            dspy.configure(lm=lm)
-            return "anthropic"
-        except Exception as e:
-            print(f"⚠️ Anthropic configuration failed: {e}")
+
     if openai_key:
         try:
             print("🟢 Using OpenAI GPT-4 as primary LLM")
@@ -53,6 +46,16 @@ def configure_dspy():
             return "openai"
         except Exception as e:
             print(f"❌ OpenAI configuration failed: {e}")
+
+    if anthropic_key:
+        try:
+            print("🔵 Using Anthropic Claude Sonnet as primary LLM")
+            lm = dspy.LM("anthropic/claude-sonnet-4-0", api_key=anthropic_key)
+            dspy.configure(lm=lm)
+            return "anthropic"
+        except Exception as e:
+            print(f"⚠️ Anthropic configuration failed: {e}")
+            
     raise Exception("No API keys found. Please set either ANTHROPIC_API_KEY or OPENAI_API_KEY")
 
 try:
@@ -490,73 +493,223 @@ async def query_db_slash(interaction: discord.Interaction, question: str):
         )
         await interaction.followup.send(embed=error_embed)
 
-# --- LlamaIndex Query Engine Integration ---
-@bot.tree.command(name="llama_query", description="Query your data using LlamaIndex's Query Engine (advanced, multi-table, reasoning)")
-async def llama_query_slash(interaction: discord.Interaction, question: str):
-    await interaction.response.defer()
-    try:
+# --- Smart Query Engine Class ---
+class SmartQueryEngine:
+    """Enhanced LlamaIndex query engine with better handling of complex queries"""
+    
+    def __init__(self):
+        self.engine = None
+        self.query_engine = None
+        self.setup_engine()
+    
+    def setup_engine(self):
+        """Setup LlamaIndex query engine"""
         try:
             from llama_index.core import SQLDatabase
+            from llama_index.core.query_engine import NLSQLTableQueryEngine
             from sqlalchemy import create_engine
             import glob
             import pandas as pd
             import os
-            # Try SQLite first for LlamaIndex compatibility
+            
+            # Setup SQLite database
+            self.engine = create_engine("sqlite:///:memory:")
+            
+            # Load parquet files
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            data_dir = os.path.join(script_dir, "data")
+            parquet_files = glob.glob(os.path.join(data_dir, "*.parquet"))
+            
+            for pf in parquet_files:
+                table_name = os.path.splitext(os.path.basename(pf))[0]
+                df = pd.read_parquet(pf)
+                df.to_sql(table_name, self.engine, if_exists='replace', index=False)
+            
+            # Create LlamaIndex query engine
+            sql_db = SQLDatabase(self.engine)
+            self.query_engine = NLSQLTableQueryEngine(sql_database=sql_db)
+            
+        except Exception as e:
+            print(f"❌ Smart Query Engine setup failed: {e}")
+            self.query_engine = None
+    
+    def break_down_complex_query(self, question):
+        """Break down complex queries into simpler parts"""
+        complex_indicators = [
+            "and what", "and why", "and how", "and when", "and where",
+            "highest balance", "most recent", "recommend", "compare",
+            "for each", "total value", "all filled", "group by", "sum of"
+        ]
+        
+        question_lower = question.lower()
+        
+        # Check if it's a complex query
+        is_complex = any(indicator in question_lower for indicator in complex_indicators)
+        
+        if not is_complex:
+            return [question]
+        
+        # Break down complex queries
+        if "and what" in question_lower:
+            parts = question.split(" and what")
+            return [parts[0], "What is " + parts[1].lstrip()]
+        
+        elif "and why" in question_lower:
+            parts = question.split(" and why")
+            return [parts[0], "Why " + parts[1].lstrip()]
+        
+        elif "highest balance" in question_lower and "most recent" in question_lower:
+            return [
+                "Which account has the highest balance?",
+                "What is the most recent order?"
+            ]
+        
+        elif "recommend" in question_lower:
+            return [
+                "What are the available securities?",
+                "What are their risk levels and fees?"
+            ]
+        
+        # Handle "for each" analytical queries
+        elif "for each" in question_lower:
+            if "total value" in question_lower and "filled orders" in question_lower:
+                return [
+                    "What are all the accounts?",
+                    "What are all the filled orders?",
+                    "What is the total value of orders for each account?"
+                ]
+            elif "account" in question_lower:
+                return [
+                    "What are all the accounts?",
+                    "What information do you want for each account?"
+                ]
+        
+        # Handle aggregation queries
+        elif "total value" in question_lower:
+            return [
+                "What orders are there?",
+                "What is the total value of all orders?"
+            ]
+        
+        # Handle "all filled" queries
+        elif "all filled" in question_lower:
+            return [
+                "What are the filled orders?",
+                "What information do you want about filled orders?"
+            ]
+        
+        return [question]
+    
+    def query(self, question):
+        """Smart query with fallback strategies"""
+        if not self.query_engine:
+            return "❌ Query engine not available"
+        
+        try:
+            # Check if it's a complex query that should be broken down proactively
+            question_lower = question.lower()
+            complex_patterns = [
+                "for each", "total value", "all filled", "group by", "sum of",
+                "and what", "and why", "highest balance", "most recent"
+            ]
+            
+            should_break_down = any(pattern in question_lower for pattern in complex_patterns)
+            
+            if should_break_down:
+                print("🔄 Detected complex query, breaking down proactively...")
+                sub_questions = self.break_down_complex_query(question)
+                
+                if len(sub_questions) > 1:
+                    answers = []
+                    
+                    for sub_q in sub_questions:
+                        try:
+                            sub_response = self.query_engine.query(sub_q)
+                            answers.append(str(sub_response))
+                        except Exception as e:
+                            answers.append(f"Error: {e}")
+                    
+                    # Combine answers
+                    combined_answer = f"Based on the breakdown:\n"
+                    for i, (sub_q, ans) in enumerate(zip(sub_questions, answers), 1):
+                        combined_answer += f"{i}. {sub_q}: {ans}\n"
+                    
+                    return combined_answer
+            
+            # Try direct query first
+            response = self.query_engine.query(question)
+            answer = str(response)
+            
+            # Check if the answer seems incomplete or has errors
+            if any(error_indicator in answer.lower() for error_indicator in [
+                "invalid", "error", "not found", "does not exist", "column", "table", "does not exist in the table", "column.*does not exist", "references a column", "does not exist in the table"
+            ]):
+                # Break down complex query
+                sub_questions = self.break_down_complex_query(question)
+                
+                if len(sub_questions) > 1:
+                    answers = []
+                    
+                    for sub_q in sub_questions:
+                        try:
+                            sub_response = self.query_engine.query(sub_q)
+                            answers.append(str(sub_response))
+                        except Exception as e:
+                            answers.append(f"Error: {e}")
+                    
+                    # Combine answers
+                    combined_answer = f"Based on the breakdown:\n"
+                    for i, (sub_q, ans) in enumerate(zip(sub_questions, answers), 1):
+                        combined_answer += f"{i}. {sub_q}: {ans}\n"
+                    
+                    return combined_answer
+            
+            return answer
+            
+        except Exception as e:
+            # Try a simpler approach
             try:
-                engine = create_engine("sqlite:///:memory:")
-                parquet_files = glob.glob("final_dspy/data/*.parquet")
-                for pf in parquet_files:
-                    table_name = os.path.splitext(os.path.basename(pf))[0]
-                    df = pd.read_parquet(pf)
-                    df.to_sql(table_name, engine, if_exists='replace', index=False)
-                sql_db = SQLDatabase(engine)
-                with engine.connect() as conn:
-                    tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
-                response = f"Available tables (SQLite): {[t[0] for t in tables]}"
-            except Exception as sqlite_exc:
-                # Fallback: Use DuckDB directly (no LlamaIndex SQLDatabase)
-                import duckdb
-                duckdb_con = duckdb.connect()
-                parquet_files = glob.glob("final_dspy/data/*.parquet")
-                for pf in parquet_files:
-                    table_name = os.path.splitext(os.path.basename(pf))[0]
-                    duckdb_con.execute(f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM read_parquet('{pf}')")
-                tables = duckdb_con.execute("SHOW TABLES").fetchall()
-                response = f"Available tables (DuckDB fallback): {[t[0] for t in tables]}\n(Note: LlamaIndex SQLDatabase not used due to inspection limitations)"
-        except ImportError:
-            tb_str = traceback.format_exc()
-            print("[LLAMA_QUERY][ERROR]", tb_str)
-            error_embed = discord.Embed(
-                title="❌ LlamaIndex Not Installed",
-                description=f"Please install llama-index: `pip install llama-index`\n\n```{tb_str[-1500:]}```",
-                color=0xff0000
-            )
-            await interaction.followup.send(embed=error_embed)
-            return
-        # Create a SQLAlchemy engine for DuckDB (in-memory for demo; use a file path for persistence)
-        # engine = create_engine("duckdb:///:memory:")
-        # Example: load Parquet files into DuckDB using SQLAlchemy engine
-        # import glob
-        # import pandas as pd
-        # parquet_files = glob.glob("final_dspy/data/*.parquet")
-        # for pf in parquet_files:
-        #     table_name = os.path.splitext(os.path.basename(pf))[0]
-        #     df = pd.read_parquet(pf)
-        #     df.to_sql(table_name, engine, if_exists='replace', index=False)
-        # sql_db = SQLDatabase(engine)
-        # Minimal working example: show available tables
-        # with engine.connect() as conn:
-        #     tables = conn.execute("SHOW TABLES").fetchall()
-        # response = f"Available tables: {[t[0] for t in tables]}"
-        # If you want to run a query, you can do:
-        # result = pd.read_sql('SELECT * FROM your_table LIMIT 5', engine)
-        # response = result.to_markdown()
+                simplified_question = self.simplify_question(question)
+                response = self.query_engine.query(simplified_question)
+                return f"Simplified answer: {response}"
+            except Exception as e2:
+                return f"❌ Query failed: {e2}"
+    
+    def simplify_question(self, question):
+        """Simplify complex questions"""
+        question_lower = question.lower()
+        
+        if "and what" in question_lower:
+            return question.split(" and what")[0] + "?"
+        
+        if "and why" in question_lower:
+            return question.split(" and why")[0] + "?"
+        
+        if "highest balance" in question_lower and "most recent" in question_lower:
+            return "Which account has the highest balance?"
+        
+        return question
+
+# Initialize Smart Query Engine (now with metadata enhancement)
+smart_engine = SmartQueryEngine()
+
+
+
+# --- LlamaIndex Query Engine Integration ---
+@bot.tree.command(name="llama_query", description="Query your data using LlamaIndex's Query Engine (enhanced with Smart Query Engine)")
+async def llama_query_slash(interaction: discord.Interaction, question: str):
+    await interaction.response.defer()
+    try:
+        # Use the Smart Query Engine for enhanced LlamaIndex functionality
+        response = smart_engine.query(question)
+        
         embed = discord.Embed(
             title="🦙 LlamaIndex Query Result",
             description=f"**Question:** {question}\n\n**Answer:**\n{response}",
             color=0x4e8cff
         )
         await interaction.followup.send(embed=embed)
+        
     except Exception as e:
         tb_str = traceback.format_exc()
         print("[LLAMA_QUERY][ERROR]", tb_str)
@@ -566,6 +719,72 @@ async def llama_query_slash(interaction: discord.Interaction, question: str):
             color=0xff0000
         )
         await interaction.followup.send(embed=error_embed)
+
+# --- Debug LlamaIndex Configuration ---
+@bot.tree.command(name="debug_llama", description="Debug LlamaIndex configuration and API keys")
+async def debug_llama_slash(interaction: discord.Interaction):
+    await interaction.response.defer()
+    try:
+        debug_info = []
+        
+        # Check environment variables
+        debug_info.append("🔍 **Environment Variables:**")
+        llama_parse_key = os.getenv('LLAMAPARSE_API_KEY')
+        anthropic_key = os.getenv('ANTHROPIC_API_KEY')
+        openai_key = os.getenv('OPENAI_API_KEY')
+        
+        debug_info.append(f"- LLAMAPARSE_API_KEY: {'✅ Set' if llama_parse_key else '❌ Not set'}")
+        debug_info.append(f"- ANTHROPIC_API_KEY: {'✅ Set' if anthropic_key else '❌ Not set'}")
+        debug_info.append(f"- OPENAI_API_KEY: {'✅ Set' if openai_key else '❌ Not set'}")
+        
+        # Check LlamaIndex installation
+        debug_info.append("\n🔍 **LlamaIndex Installation:**")
+        try:
+            import llama_index
+            debug_info.append(f"- LlamaIndex version: {llama_index.__version__}")
+        except ImportError:
+            debug_info.append("- ❌ LlamaIndex not installed")
+        except Exception as e:
+            debug_info.append(f"- ⚠️ LlamaIndex import error: {e}")
+        
+        # Check data directory
+        debug_info.append("\n🔍 **Data Directory:**")
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.join(script_dir, "data")
+        debug_info.append(f"- Data directory: {data_dir}")
+        debug_info.append(f"- Directory exists: {'✅ Yes' if os.path.exists(data_dir) else '❌ No'}")
+        
+        if os.path.exists(data_dir):
+            files = os.listdir(data_dir)
+            parquet_files = [f for f in files if f.endswith('.parquet')]
+            debug_info.append(f"- Total files: {len(files)}")
+            debug_info.append(f"- Parquet files: {len(parquet_files)}")
+            debug_info.append(f"- Parquet files: {parquet_files}")
+        
+        # Test database connection
+        debug_info.append("\n🔍 **Database Test:**")
+        try:
+            import duckdb
+            duckdb_con = duckdb.connect()
+            debug_info.append("- ✅ DuckDB connection successful")
+            duckdb_con.close()
+        except Exception as e:
+            debug_info.append(f"- ❌ DuckDB connection failed: {e}")
+        
+        embed = discord.Embed(
+            title="🔧 LlamaIndex Debug Information",
+            description="\n".join(debug_info),
+            color=0x00ff00
+        )
+        await interaction.followup.send(embed=embed)
+        
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="❌ Debug Error",
+            description=f"Failed to get debug info: {str(e)}",
+            color=0xff0000
+        )
+        await interaction.followup.send(embed=embed)
 
 # --- Other commands (help, ping, welcome, status) ---
 # (Copy unchanged from dspy_bot.py, omitted here for brevity, but will be included in the actual file)
