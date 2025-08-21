@@ -1,0 +1,50 @@
+# Discord Bot Requirements
+# Core Discord functionality
+discord.py
+
+# LLM and AI frameworks
+dspy-ai
+llama-index
+llama-index-llms-anthropic
+
+# Database and data processing
+duckdb
+pandas
+sqlalchemy
+pyarrow
+
+# Financial data
+yfinance
+
+# Environment and configuration
+python-dotenv
+
+# Data analysis and processing
+numpy
+scikit-learn
+
+# Semantic search and embeddings
+sentence-transformers
+rank-bm25
+
+# HTTP requests and API calls
+requests
+aiohttp
+
+# JSON and data serialization
+pydantic
+
+# Date and time handling
+python-dateutil
+
+# File handling and utilities
+pathlib2
+
+# Optional: For enhanced performance
+# numba
+# cython
+
+# Development and testing (optional)
+# pytest
+# black
+# flake8
