@@ -465,26 +465,26 @@ class ScotchRAGApp:
                 body {
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     margin: 0;
-                    padding: 20px;
+                    padding: 5px;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     min-height: 100vh;
                 }
                 .container {
-                    max-width: 1000px;
+                    max-width: 95vw;
                     margin: 0 auto;
                     background: white;
-                    border-radius: 15px;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                    border-radius: 10px;
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
                     overflow: hidden;
                     display: flex;
                     flex-direction: column;
-                    height: 85vh;
-                    min-height: 600px;
+                    height: 95vh;
+                    min-height: 700px;
                 }
                 .header {
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color: white;
-                    padding: 15px;
+                    padding: 10px;
                     text-align: center;
                     flex-shrink: 0;
                 }
@@ -496,14 +496,14 @@ class ScotchRAGApp:
                 }
                 .chat-messages {
                     flex: 1;
-                    padding: 20px;
+                    padding: 10px;
                     overflow-y: scroll;
                     background: #f8f9fa;
                     scroll-behavior: smooth;
                     scrollbar-width: thin;
                     scrollbar-color: #667eea #f8f9fa;
-                    min-height: 300px;
-                    max-height: 50vh;
+                    min-height: 400px;
+                    max-height: 70vh;
                 }
                 .chat-messages::-webkit-scrollbar {
                     width: 12px;
@@ -525,12 +525,12 @@ class ScotchRAGApp:
                     background: #f8f9fa;
                 }
                 .message {
-                    margin: 15px 0;
-                    padding: 15px;
-                    border-radius: 15px;
-                    max-width: 80%;
+                    margin: 8px 0;
+                    padding: 10px 12px;
+                    border-radius: 10px;
+                    max-width: 85%;
                     word-wrap: break-word;
-                    line-height: 1.5;
+                    line-height: 1.4;
                     position: relative;
                     animation: fadeIn 0.3s ease-in;
                 }
@@ -546,9 +546,9 @@ class ScotchRAGApp:
                     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
                 }
                 .message-timestamp {
-                    font-size: 11px;
-                    opacity: 0.7;
-                    margin-top: 5px;
+                    font-size: 10px;
+                    opacity: 0.6;
+                    margin-top: 3px;
                     display: block;
                 }
                 .message.user .message-timestamp {
@@ -558,7 +558,7 @@ class ScotchRAGApp:
                     color: #6c757d;
                 }
                 .chat-input {
-                    padding: 20px;
+                    padding: 12px;
                     border-top: 1px solid #dee2e6;
                     background: white;
                     flex-shrink: 0;
@@ -569,10 +569,10 @@ class ScotchRAGApp:
                 }
                 .chat-input input {
                     flex: 1;
-                    padding: 15px;
+                    padding: 10px 15px;
                     border: 1px solid #dee2e6;
-                    border-radius: 25px;
-                    font-size: 16px;
+                    border-radius: 20px;
+                    font-size: 14px;
                     transition: border-color 0.3s ease;
                 }
                 .chat-input input:focus {
@@ -581,13 +581,14 @@ class ScotchRAGApp:
                     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
                 }
                 .btn {
-                    padding: 15px 30px;
+                    padding: 10px 20px;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color: white;
                     border: none;
-                    border-radius: 25px;
+                    border-radius: 20px;
                     cursor: pointer;
                     font-weight: 500;
+                    font-size: 14px;
                     transition: all 0.3s ease;
                 }
                 .btn:hover {
@@ -618,18 +619,18 @@ class ScotchRAGApp:
                 }
                 .scroll-to-top-btn {
                     position: absolute;
-                    bottom: 100px;
-                    right: 20px;
-                    width: 50px;
-                    height: 50px;
+                    bottom: 80px;
+                    right: 15px;
+                    width: 40px;
+                    height: 40px;
                     border-radius: 50%;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color: white;
                     border: none;
                     cursor: pointer;
-                    font-size: 18px;
+                    font-size: 16px;
                     font-weight: bold;
-                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
                     transition: all 0.3s ease;
                     opacity: 0;
                     visibility: hidden;
