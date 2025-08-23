@@ -484,8 +484,9 @@ class ScotchRAGApp:
                 .header {
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color: white;
-                    padding: 20px;
+                    padding: 15px;
                     text-align: center;
+                    flex-shrink: 0;
                 }
                 .chat-container {
                     flex: 1;
@@ -501,8 +502,8 @@ class ScotchRAGApp:
                     scroll-behavior: smooth;
                     scrollbar-width: thin;
                     scrollbar-color: #667eea #f8f9fa;
-                    min-height: 400px;
-                    max-height: 60vh;
+                    min-height: 300px;
+                    max-height: 50vh;
                 }
                 .chat-messages::-webkit-scrollbar {
                     width: 12px;
@@ -560,6 +561,7 @@ class ScotchRAGApp:
                     padding: 20px;
                     border-top: 1px solid #dee2e6;
                     background: white;
+                    flex-shrink: 0;
                 }
                 .input-group {
                     display: flex;
@@ -822,32 +824,7 @@ class ScotchRAGApp:
                 // Focus input on page load
                 window.addEventListener('load', () => {
                     questionInput.focus();
-                    
-                    // Add some test messages to demonstrate scroll functionality
-                    setTimeout(() => {
-                        addTestMessages();
-                    }, 1000);
                 });
-                
-                function addTestMessages() {
-                    const testMessages = [
-                        { text: "This is a test message to demonstrate scroll functionality.", sender: 'bot' },
-                        { text: "Another test message to show how the scrollbar works.", sender: 'user' },
-                        { text: "The scrollbar should now be visible on the right side.", sender: 'bot' },
-                        { text: "You can scroll up and down to see all messages.", sender: 'user' },
-                        { text: "The scroll-to-top button will appear when you scroll down.", sender: 'bot' },
-                        { text: "Try scrolling up to see the button appear!", sender: 'user' },
-                        { text: "This message should trigger the scrollbar to appear.", sender: 'bot' },
-                        { text: "The chat area now has a fixed height and proper scrolling.", sender: 'user' },
-                        { text: "You can remove these test messages by refreshing the page.", sender: 'bot' }
-                    ];
-                    
-                    testMessages.forEach((msg, index) => {
-                        setTimeout(() => {
-                            addMessage(msg.text, msg.sender);
-                        }, index * 200);
-                    });
-                }
                 """
             ),
         )
