@@ -478,7 +478,8 @@ class ScotchRAGApp:
                     overflow: hidden;
                     display: flex;
                     flex-direction: column;
-                    height: 80vh;
+                    height: 85vh;
+                    min-height: 600px;
                 }
                 .header {
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -495,24 +496,32 @@ class ScotchRAGApp:
                 .chat-messages {
                     flex: 1;
                     padding: 20px;
-                    overflow-y: auto;
+                    overflow-y: scroll;
                     background: #f8f9fa;
                     scroll-behavior: smooth;
                     scrollbar-width: thin;
                     scrollbar-color: #667eea #f8f9fa;
+                    min-height: 400px;
+                    max-height: 60vh;
                 }
                 .chat-messages::-webkit-scrollbar {
-                    width: 8px;
+                    width: 12px;
+                    background-color: #f8f9fa;
                 }
                 .chat-messages::-webkit-scrollbar-track {
                     background: #f8f9fa;
+                    border-radius: 6px;
                 }
                 .chat-messages::-webkit-scrollbar-thumb {
                     background: #667eea;
-                    border-radius: 4px;
+                    border-radius: 6px;
+                    border: 2px solid #f8f9fa;
                 }
                 .chat-messages::-webkit-scrollbar-thumb:hover {
                     background: #764ba2;
+                }
+                .chat-messages::-webkit-scrollbar-corner {
+                    background: #f8f9fa;
                 }
                 .message {
                     margin: 15px 0;
@@ -813,7 +822,32 @@ class ScotchRAGApp:
                 // Focus input on page load
                 window.addEventListener('load', () => {
                     questionInput.focus();
+                    
+                    // Add some test messages to demonstrate scroll functionality
+                    setTimeout(() => {
+                        addTestMessages();
+                    }, 1000);
                 });
+                
+                function addTestMessages() {
+                    const testMessages = [
+                        { text: "This is a test message to demonstrate scroll functionality.", sender: 'bot' },
+                        { text: "Another test message to show how the scrollbar works.", sender: 'user' },
+                        { text: "The scrollbar should now be visible on the right side.", sender: 'bot' },
+                        { text: "You can scroll up and down to see all messages.", sender: 'user' },
+                        { text: "The scroll-to-top button will appear when you scroll down.", sender: 'bot' },
+                        { text: "Try scrolling up to see the button appear!", sender: 'user' },
+                        { text: "This message should trigger the scrollbar to appear.", sender: 'bot' },
+                        { text: "The chat area now has a fixed height and proper scrolling.", sender: 'user' },
+                        { text: "You can remove these test messages by refreshing the page.", sender: 'bot' }
+                    ];
+                    
+                    testMessages.forEach((msg, index) => {
+                        setTimeout(() => {
+                            addMessage(msg.text, msg.sender);
+                        }, index * 200);
+                    });
+                }
                 """
             ),
         )
