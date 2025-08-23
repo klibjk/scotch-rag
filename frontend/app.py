@@ -13,14 +13,17 @@ from datetime import datetime
 
 # FastHTML + MonsterUI imports
 try:
-    from fasthtml import FastHTML, html
-    from monsterui import MonsterUI, ui
+    from fasthtml.common import *
+    from monsterui.core import FastHTML as MonsterUIFastHTML
+
+    FastHTML_AVAILABLE = True
+    MonsterUI_AVAILABLE = True
 except ImportError:
     # Fallback for development
-    FastHTML = None
-    MonsterUI = None
+    FastHTML_AVAILABLE = False
+    MonsterUI_AVAILABLE = False
 
-from ..rag_system import RAGSystem, RAGConfig
+from rag.rag_system import RAGSystem
 
 logger = logging.getLogger(__name__)
 
@@ -29,51 +32,108 @@ class ScotchRAGApp:
     """
     Main FastHTML + MonsterUI application for Scotch-RAG.
     """
-    
+
     def __init__(self, rag_system: RAGSystem):
         """
         Initialize the application.
-        
+
         Args:
             rag_system: Initialized RAG system instance
         """
         self.rag_system = rag_system
         self.app = None
         self.conversation_history = []
-        
-        if FastHTML is None or MonsterUI is None:
+
+        if not FastHTML_AVAILABLE or not MonsterUI_AVAILABLE:
             logger.warning("FastHTML/MonsterUI not available, using fallback")
             self._create_fallback_app()
         else:
             self._create_app()
-    
+
     def _create_app(self):
         """Create the FastHTML + MonsterUI application."""
-        self.app = FastHTML()
-        
-        # Register routes
-        self.app.route("/")(self.home_page)
-        self.app.route("/upload")(self.upload_page)
-        self.app.route("/chat")(self.chat_page)
-        self.app.route("/api/upload", methods=["POST"])(self.api_upload)
-        self.app.route("/api/ask", methods=["POST"])(self.api_ask)
-        self.app.route("/api/status")(self.api_status)
-    
+        self.app, self.rt = fast_app()
+
+        # Register routes using the correct decorator pattern
+        @self.rt("/")
+        def home():
+            return self.home_page()
+
+        @self.rt("/upload")
+        def upload():
+            return self.upload_page()
+
+        @self.rt("/chat")
+        def chat():
+            return self.chat_page()
+
+        @self.rt("/api/upload")
+        def api_upload(request):
+            return self.api_upload(request)
+
+        @self.rt("/api/ask")
+        def api_ask(request):
+            return self.api_ask(request)
+
+        @self.rt("/api/status")
+        def api_status(request):
+            return self.api_status()
+
     def _create_fallback_app(self):
         """Create a fallback application for development."""
         # This would be a simple HTML/JavaScript app for development
         logger.info("Using fallback app for development")
-    
+
     def home_page(self):
         """Render the home page."""
-        return html("""
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Scotch-RAG - Document Q&A System</title>
-            <style>
+        return Titled(
+            "Scotch-RAG - Document Q&A System",
+            Div(
+                Div(
+                    H1("🥃 Scotch-RAG"),
+                    P("Intelligent Document Q&A with RAG Technology"),
+                    cls="header",
+                ),
+                Div(
+                    H2("Welcome to Scotch-RAG"),
+                    P(
+                        "Upload your documents and ask questions to get intelligent answers powered by advanced RAG (Retrieval-Augmented Generation) technology."
+                    ),
+                    Div(
+                        Div(
+                            H3("📄 Multi-Format Support"),
+                            P(
+                                "Upload PDFs, Excel files, Word documents, and text files. Our system processes them all."
+                            ),
+                            cls="feature",
+                        ),
+                        Div(
+                            H3("🤖 AI-Powered Answers"),
+                            P(
+                                "Get intelligent, context-aware answers based on your uploaded documents."
+                            ),
+                            cls="feature",
+                        ),
+                        Div(
+                            H3("💬 Conversational Interface"),
+                            P(
+                                "Chat naturally with your documents. Ask follow-up questions and get detailed responses."
+                            ),
+                            cls="feature",
+                        ),
+                        cls="features",
+                    ),
+                    Div(
+                        A("📤 Upload Documents", href="/upload", cls="btn"),
+                        A("💬 Start Chatting", href="/chat", cls="btn btn-secondary"),
+                        cls="cta-buttons",
+                    ),
+                    cls="content",
+                ),
+                cls="container",
+            ),
+            Style(
+                """
                 body {
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     margin: 0;
@@ -149,53 +209,58 @@ class ScotchRAGApp:
                 .btn-secondary {
                     background: #6c757d;
                 }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>🥃 Scotch-RAG</h1>
-                    <p>Intelligent Document Q&A with RAG Technology</p>
-                </div>
-                <div class="content">
-                    <h2>Welcome to Scotch-RAG</h2>
-                    <p>Upload your documents and ask questions to get intelligent answers powered by advanced RAG (Retrieval-Augmented Generation) technology.</p>
-                    
-                    <div class="features">
-                        <div class="feature">
-                            <h3>📄 Multi-Format Support</h3>
-                            <p>Upload PDFs, Excel files, Word documents, and text files. Our system processes them all.</p>
-                        </div>
-                        <div class="feature">
-                            <h3>🤖 AI-Powered Answers</h3>
-                            <p>Get intelligent, context-aware answers based on your uploaded documents.</p>
-                        </div>
-                        <div class="feature">
-                            <h3>💬 Conversational Interface</h3>
-                            <p>Chat naturally with your documents. Ask follow-up questions and get detailed responses.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="cta-buttons">
-                        <a href="/upload" class="btn">📤 Upload Documents</a>
-                        <a href="/chat" class="btn btn-secondary">💬 Start Chatting</a>
-                    </div>
-                </div>
-            </div>
-        </body>
-        </html>
-        """)
-    
+            """
+            ),
+        )
+
     def upload_page(self):
         """Render the document upload page."""
-        return html("""
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Upload Documents - Scotch-RAG</title>
-            <style>
+        return Titled(
+            "Upload Documents - Scotch-RAG",
+            Div(
+                Div(
+                    H1("📤 Upload Documents"),
+                    P("Upload your documents to start asking questions"),
+                    cls="header",
+                ),
+                Div(
+                    Div(
+                        H3("Drop files here or click to browse"),
+                        P(
+                            "Supported formats: PDF, Excel (.xlsx, .xls), Word (.docx, .doc), Text (.txt), CSV"
+                        ),
+                        Button(
+                            "Choose Files",
+                            cls="btn",
+                            onclick="document.getElementById('fileInput').click()",
+                        ),
+                        Input(
+                            type="file",
+                            id="fileInput",
+                            cls="file-input",
+                            multiple=True,
+                            accept=".pdf,.xlsx,.xls,.docx,.doc,.txt,.csv",
+                        ),
+                        id="uploadArea",
+                        cls="upload-area",
+                    ),
+                    Div(id="fileList", cls="file-list"),
+                    Div(
+                        A("💬 Start Chatting", href="/chat", cls="btn"),
+                        A(
+                            "🏠 Back to Home",
+                            href="/",
+                            cls="btn",
+                            style="background: #6c757d;",
+                        ),
+                        style="text-align: center; margin-top: 30px;",
+                    ),
+                    cls="content",
+                ),
+                cls="container",
+            ),
+            Style(
+                """
                 body {
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     margin: 0;
@@ -227,6 +292,7 @@ class ScotchRAGApp:
                     text-align: center;
                     margin: 20px 0;
                     transition: border-color 0.3s ease;
+                    cursor: pointer;
                 }
                 .upload-area:hover {
                     border-color: #764ba2;
@@ -278,32 +344,10 @@ class ScotchRAGApp:
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     transition: width 0.3s ease;
                 }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>📤 Upload Documents</h1>
-                    <p>Upload your documents to start asking questions</p>
-                </div>
-                <div class="content">
-                    <div class="upload-area" id="uploadArea">
-                        <h3>Drop files here or click to browse</h3>
-                        <p>Supported formats: PDF, Excel (.xlsx, .xls), Word (.docx, .doc), Text (.txt), CSV</p>
-                        <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.xlsx,.xls,.docx,.doc,.txt,.csv">
-                        <button class="btn" onclick="document.getElementById('fileInput').click()">Choose Files</button>
-                    </div>
-                    
-                    <div class="file-list" id="fileList"></div>
-                    
-                    <div style="text-align: center; margin-top: 30px;">
-                        <a href="/chat" class="btn">💬 Start Chatting</a>
-                        <a href="/" class="btn" style="background: #6c757d;">🏠 Back to Home</a>
-                    </div>
-                </div>
-            </div>
-            
-            <script>
+                """
+            ),
+            Script(
+                """
                 const uploadArea = document.getElementById('uploadArea');
                 const fileInput = document.getElementById('fileInput');
                 const fileList = document.getElementById('fileList');
@@ -369,21 +413,48 @@ class ScotchRAGApp:
                         fileItem.innerHTML = `<span>${file.name}</span> <span style="color: red;">✗ Error</span>`;
                     });
                 }
-            </script>
-        </body>
-        </html>
-        """)
-    
+                """
+            ),
+        )
+
     def chat_page(self):
         """Render the chat interface page."""
-        return html("""
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Chat - Scotch-RAG</title>
-            <style>
+        return Titled(
+            "Chat - Scotch-RAG",
+            Div(
+                Div(
+                    H1("💬 Scotch-RAG Chat"),
+                    P("Ask questions about your uploaded documents"),
+                    cls="header",
+                ),
+                Div(
+                    Div(
+                        Div(
+                            "Hello! I'm your Scotch-RAG assistant. Ask me anything about your uploaded documents.",
+                            cls="message bot",
+                        ),
+                        id="chatMessages",
+                        cls="chat-messages",
+                    ),
+                    Div(
+                        Div(
+                            Input(
+                                type="text",
+                                id="questionInput",
+                                placeholder="Ask a question...",
+                                onkeypress="handleKeyPress(event)",
+                            ),
+                            Button("Send", cls="btn", onclick="askQuestion()"),
+                            cls="input-group",
+                        ),
+                        cls="chat-input",
+                    ),
+                    cls="chat-container",
+                ),
+                cls="container",
+            ),
+            Style(
+                """
                 body {
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     margin: 0;
@@ -467,30 +538,10 @@ class ScotchRAGApp:
                     padding: 20px;
                     color: #6c757d;
                 }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>💬 Scotch-RAG Chat</h1>
-                    <p>Ask questions about your uploaded documents</p>
-                </div>
-                <div class="chat-container">
-                    <div class="chat-messages" id="chatMessages">
-                        <div class="message bot">
-                            Hello! I'm your Scotch-RAG assistant. Ask me anything about your uploaded documents.
-                        </div>
-                    </div>
-                    <div class="chat-input">
-                        <div class="input-group">
-                            <input type="text" id="questionInput" placeholder="Ask a question..." onkeypress="handleKeyPress(event)">
-                            <button class="btn" onclick="askQuestion()">Send</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <script>
+                """
+            ),
+            Script(
+                """
                 const chatMessages = document.getElementById('chatMessages');
                 const questionInput = document.getElementById('questionInput');
                 
@@ -515,9 +566,9 @@ class ScotchRAGApp:
                     fetch('/api/ask', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
+                            'Content-Type': 'application/x-www-form-urlencoded',
                         },
-                        body: JSON.stringify({ question: question })
+                        body: 'question=' + encodeURIComponent(question)
                     })
                     .then(response => response.json())
                     .then(data => {
@@ -554,63 +605,204 @@ class ScotchRAGApp:
                         loadingDiv.remove();
                     }
                 }
-            </script>
-        </body>
-        </html>
-        """)
-    
+                """
+            ),
+        )
+
     def api_upload(self, request):
         """Handle file upload API endpoint."""
         try:
-            # Handle file upload logic here
-            return {"success": True, "message": "File uploaded successfully"}
+            # Get uploaded files from the request
+            files = request.files()
+
+            if not files:
+                return JSONResponse({"success": False, "error": "No files uploaded"})
+
+            uploaded_files = []
+            for file in files:
+                try:
+                    # Save the uploaded file temporarily
+                    import tempfile
+                    import os
+
+                    # Create uploads directory if it doesn't exist
+                    upload_dir = Path("data/uploads")
+                    upload_dir.mkdir(parents=True, exist_ok=True)
+
+                    # Save file to uploads directory
+                    file_path = upload_dir / file.filename
+                    with open(file_path, "wb") as f:
+                        f.write(file.file.read())
+
+                    # Process the file with RAG system
+                    result = self.rag_system.ingest_file(str(file_path))
+
+                    if result.get("status") == "success":
+                        uploaded_files.append(
+                            {
+                                "filename": file.filename,
+                                "status": "success",
+                                "chunks": result.get("chunks_created", 0),
+                            }
+                        )
+                    else:
+                        uploaded_files.append(
+                            {
+                                "filename": file.filename,
+                                "status": "error",
+                                "error": result.get("error", "Unknown error"),
+                            }
+                        )
+
+                except Exception as e:
+                    uploaded_files.append(
+                        {"filename": file.filename, "status": "error", "error": str(e)}
+                    )
+
+            # Check if any files were successfully uploaded
+            successful_uploads = [f for f in uploaded_files if f["status"] == "success"]
+
+            if successful_uploads:
+                return JSONResponse(
+                    {
+                        "success": True,
+                        "message": f"Successfully uploaded {len(successful_uploads)} file(s)",
+                        "files": uploaded_files,
+                    }
+                )
+            else:
+                return JSONResponse(
+                    {
+                        "success": False,
+                        "error": "No files were successfully processed",
+                        "files": uploaded_files,
+                    }
+                )
+
         except Exception as e:
             logger.error(f"Upload error: {e}")
-            return {"success": False, "error": str(e)}
-    
+            return JSONResponse({"success": False, "error": str(e)})
+
     def api_ask(self, request):
         """Handle question asking API endpoint."""
         try:
-            data = request.json()
-            question = data.get('question', '')
-            
+            # Extract question from request
+            question = ""
+
+            # Try to get question from request body using asyncio
+            if hasattr(request, "body"):
+                try:
+                    import asyncio
+
+                    # Get the event loop and run the async body() method
+                    try:
+                        loop = asyncio.get_event_loop()
+                    except RuntimeError:
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+
+                    body_data = loop.run_until_complete(request.body())
+                    if isinstance(body_data, bytes):
+                        body_data = body_data.decode("utf-8")
+
+                    logger.info(f"Request body: {body_data}")
+
+                    # Try to parse as form data first
+                    if "question=" in body_data:
+                        parts = body_data.split("question=")
+                        if len(parts) > 1:
+                            question = (
+                                parts[1].split("&")[0] if "&" in parts[1] else parts[1]
+                            )
+                            question = question.replace("+", " ").replace("%20", " ")
+                            logger.info(f"Parsed question from form data: {question}")
+
+                    # If not form data, try JSON
+                    elif not question and body_data.strip().startswith("{"):
+                        import json
+
+                        data = json.loads(body_data)
+                        question = data.get("question", "")
+                        logger.info(f"Parsed question from JSON: {question}")
+
+                except Exception as e:
+                    logger.error(f"Error parsing request body: {e}")
+
+            # If still no question, try other methods
             if not question:
-                return {"success": False, "error": "No question provided"}
-            
+                try:
+                    # Try to get from query parameters
+                    if hasattr(request, "query_params"):
+                        question = request.query_params.get("question", "")
+                        logger.info(f"Got question from query params: {question}")
+
+                    # Try to get from request parameters
+                    elif hasattr(request, "params"):
+                        question = request.params.get("question", "")
+                        logger.info(f"Got question from params: {question}")
+
+                except Exception as e:
+                    logger.error(f"Error getting question from params: {e}")
+
+            if not question:
+                return JSONResponse({"success": False, "error": "No question provided"})
+
+            logger.info(f"Processing question: {question}")
+
             # Get answer from RAG system
-            answer = self.rag_system.ask_question(question)
-            
-            return {
-                "success": True,
-                "answer": answer,
-                "question": question
-            }
-            
+            result = self.rag_system.query(question)
+
+            logger.info(f"RAG result status: {result.get('status')}")
+
+            if result["status"] == "success":
+                answer = result["answer"]
+                logger.info(f"Generated answer length: {len(answer)}")
+                return JSONResponse(
+                    {"success": True, "answer": answer, "question": question}
+                )
+            else:
+                error_msg = result.get("error", "Unknown error")
+                logger.error(f"RAG query failed: {error_msg}")
+                return JSONResponse({"success": False, "error": error_msg})
+
         except Exception as e:
             logger.error(f"Ask error: {e}")
-            return {"success": False, "error": str(e)}
-    
+            return JSONResponse({"success": False, "error": str(e)})
+
     def api_status(self):
         """Get system status API endpoint."""
         try:
-            doc_count = self.rag_system.get_document_count()
-            supported_formats = self.rag_system.get_supported_formats()
-            
-            return {
-                "success": True,
-                "document_count": doc_count,
-                "supported_formats": supported_formats,
-                "status": "ready"
-            }
-            
+            stats = self.rag_system.get_stats()
+
+            return JSONResponse(
+                {
+                    "success": True,
+                    "document_count": stats.get("total_vectors", 0),
+                    "supported_formats": [
+                        "PDF",
+                        "Excel (.xlsx, .xls)",
+                        "Word (.docx, .doc)",
+                        "Text (.txt)",
+                        "CSV",
+                    ],
+                    "status": (
+                        "ready" if stats.get("status") == "active" else "no_documents"
+                    ),
+                }
+            )
+
         except Exception as e:
             logger.error(f"Status error: {e}")
-            return {"success": False, "error": str(e)}
-    
+            return JSONResponse({"success": False, "error": str(e)})
+
     def run(self, host: str = "0.0.0.0", port: int = 8000, debug: bool = True):
         """Run the application."""
         if self.app:
-            self.app.run(host=host, port=port, debug=debug)
+            import uvicorn
+
+            uvicorn.run(
+                self.app, host=host, port=port, log_level="debug" if debug else "info"
+            )
         else:
             logger.error("Application not initialized")
 
@@ -618,10 +810,10 @@ class ScotchRAGApp:
 def create_app(rag_system: RAGSystem) -> ScotchRAGApp:
     """
     Create and return a Scotch-RAG application instance.
-    
+
     Args:
         rag_system: Initialized RAG system instance
-        
+
     Returns:
         ScotchRAGApp instance
     """

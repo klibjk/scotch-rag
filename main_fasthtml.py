@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from rag_system import RAGSystem, RAGConfig
+from rag.rag_system import RAGSystem
 from frontend import create_app
 
 # Configure logging
@@ -61,18 +61,14 @@ def validate_environment():
     return True
 
 
-def create_rag_config() -> RAGConfig:
+def create_rag_config():
     """Create RAG configuration from environment variables."""
-    return RAGConfig(
-        openai_api_key=os.getenv('OPENAI_API_KEY'),
-        model_name=os.getenv('OPENAI_MODEL', 'gpt-5-mini'),  # Matching original RAG system
-        temperature=float(os.getenv('OPENAI_TEMPERATURE', '0.1')),  # Matching original RAG system
-        max_tokens=int(os.getenv('OPENAI_MAX_TOKENS', '2000')),  # Matching original RAG system
-        chunk_size=int(os.getenv('RAG_CHUNK_SIZE', '800')),  # Matching original RAG system
-        chunk_overlap=int(os.getenv('RAG_CHUNK_OVERLAP', '50')),  # Matching original RAG system
-        index_path=os.getenv('RAG_INDEX_PATH', 'data/faiss_indexes'),
-        data_path=os.getenv('RAG_DATA_PATH', 'data/uploads')
-    )
+    return {
+        'base_storage_dir': os.getenv('RAG_INDEX_PATH', './faiss_indexes'),
+        'chunk_size': int(os.getenv('RAG_CHUNK_SIZE', '800')),
+        'chunk_overlap': int(os.getenv('RAG_CHUNK_OVERLAP', '50')),
+        'max_retrieval_results': int(os.getenv('RAG_MAX_RETRIEVAL', '7'))
+    }
 
 
 def main():
@@ -90,11 +86,11 @@ def main():
     try:
         # Create RAG configuration
         config = create_rag_config()
-        logger.info(f"RAG configuration created with model: {config.model_name}")
+        logger.info(f"RAG configuration created with chunk_size: {config['chunk_size']}")
         
         # Initialize RAG system
         logger.info("Initializing RAG system...")
-        rag_system = RAGSystem(config)
+        rag_system = RAGSystem(**config)
         logger.info("RAG system initialized successfully")
         
         # Create web application
