@@ -1,0 +1,42 @@
+# Core Dependencies
+python-dotenv==1.0.1
+
+# LangChain Framework (like reference)
+langchain==0.3.27
+langchain-openai==0.3.29
+langchain-community==0.3.27
+langchain-core==0.3.74
+langchain-text-splitters==0.3.9
+
+# OpenAI Integration
+openai==1.99.9
+
+# Vector Store (like reference)
+faiss-cpu==1.8.0
+
+# Excel Processing - Enhanced with LlamaParse (like reference)
+llama-parse>=0.5.0
+
+
+
+# Optional Web Search (like reference)
+tavily-python==0.3.3
+
+# Model Comparison Dependencies
+langchain-anthropic>=0.2.0
+langchain-google-genai>=0.1.0
+langchain-pinecone>=0.1.0
+PyJWT>=2.8.0
+redis>=4.5.0
+unstructured>=0.10.0
+
+# Utilities
+numpy==1.26.4
+pandas==2.2.0
+aiofiles>=24.1.0
+
+# Rich Terminal Interface
+rich==13.7.0
+
+# File Monitoring
+watchdog==4.0.0
