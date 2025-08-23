@@ -436,6 +436,13 @@ class ScotchRAGApp:
                         id="chatMessages",
                         cls="chat-messages",
                     ),
+                    Button(
+                        "↑",
+                        id="scrollToTopBtn",
+                        cls="scroll-to-top-btn",
+                        onclick="scrollToTop()",
+                        title="Scroll to top",
+                    ),
                     Div(
                         Div(
                             Input(
@@ -483,27 +490,62 @@ class ScotchRAGApp:
                     flex: 1;
                     display: flex;
                     flex-direction: column;
+                    position: relative;
                 }
                 .chat-messages {
                     flex: 1;
                     padding: 20px;
                     overflow-y: auto;
                     background: #f8f9fa;
+                    scroll-behavior: smooth;
+                    scrollbar-width: thin;
+                    scrollbar-color: #667eea #f8f9fa;
+                }
+                .chat-messages::-webkit-scrollbar {
+                    width: 8px;
+                }
+                .chat-messages::-webkit-scrollbar-track {
+                    background: #f8f9fa;
+                }
+                .chat-messages::-webkit-scrollbar-thumb {
+                    background: #667eea;
+                    border-radius: 4px;
+                }
+                .chat-messages::-webkit-scrollbar-thumb:hover {
+                    background: #764ba2;
                 }
                 .message {
-                    margin: 10px 0;
+                    margin: 15px 0;
                     padding: 15px;
-                    border-radius: 10px;
+                    border-radius: 15px;
                     max-width: 80%;
+                    word-wrap: break-word;
+                    line-height: 1.5;
+                    position: relative;
+                    animation: fadeIn 0.3s ease-in;
                 }
                 .message.user {
-                    background: #667eea;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color: white;
                     margin-left: auto;
+                    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
                 }
                 .message.bot {
                     background: white;
                     border: 1px solid #dee2e6;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                }
+                .message-timestamp {
+                    font-size: 11px;
+                    opacity: 0.7;
+                    margin-top: 5px;
+                    display: block;
+                }
+                .message.user .message-timestamp {
+                    color: rgba(255, 255, 255, 0.8);
+                }
+                .message.bot .message-timestamp {
+                    color: #6c757d;
                 }
                 .chat-input {
                     padding: 20px;
@@ -520,6 +562,12 @@ class ScotchRAGApp:
                     border: 1px solid #dee2e6;
                     border-radius: 25px;
                     font-size: 16px;
+                    transition: border-color 0.3s ease;
+                }
+                .chat-input input:focus {
+                    outline: none;
+                    border-color: #667eea;
+                    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
                 }
                 .btn {
                     padding: 15px 30px;
@@ -529,14 +577,91 @@ class ScotchRAGApp:
                     border-radius: 25px;
                     cursor: pointer;
                     font-weight: 500;
+                    transition: all 0.3s ease;
                 }
                 .btn:hover {
                     opacity: 0.9;
+                    transform: translateY(-1px);
+                }
+                .btn:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                    transform: none;
                 }
                 .loading {
                     text-align: center;
                     padding: 20px;
                     color: #6c757d;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                }
+                .loading-spinner {
+                    width: 20px;
+                    height: 20px;
+                    border: 2px solid #f3f3f3;
+                    border-top: 2px solid #667eea;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                }
+                .scroll-to-top-btn {
+                    position: absolute;
+                    bottom: 100px;
+                    right: 20px;
+                    width: 50px;
+                    height: 50px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    cursor: pointer;
+                    font-size: 18px;
+                    font-weight: bold;
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                    transition: all 0.3s ease;
+                    opacity: 0;
+                    visibility: hidden;
+                    z-index: 1000;
+                }
+                .scroll-to-top-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+                }
+                .scroll-to-top-btn.visible {
+                    opacity: 1;
+                    visibility: visible;
+                }
+                .error-message {
+                    background: #f8d7da;
+                    color: #721c24;
+                    border: 1px solid #f5c6cb;
+                    border-radius: 10px;
+                    padding: 15px;
+                    margin: 10px 0;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .retry-btn {
+                    background: #dc3545;
+                    color: white;
+                    border: none;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 12px;
+                }
+                .retry-btn:hover {
+                    background: #c82333;
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
                 }
                 """
             ),
@@ -544,9 +669,15 @@ class ScotchRAGApp:
                 """
                 const chatMessages = document.getElementById('chatMessages');
                 const questionInput = document.getElementById('questionInput');
+                const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+                const sendBtn = document.querySelector('.btn');
+                
+                // Initialize scroll functionality
+                chatMessages.addEventListener('scroll', handleScroll);
                 
                 function handleKeyPress(event) {
-                    if (event.key === 'Enter') {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault();
                         askQuestion();
                     }
                 }
@@ -554,6 +685,10 @@ class ScotchRAGApp:
                 function askQuestion() {
                     const question = questionInput.value.trim();
                     if (!question) return;
+                    
+                    // Disable input and button during request
+                    questionInput.disabled = true;
+                    sendBtn.disabled = true;
                     
                     // Add user message
                     addMessage(question, 'user');
@@ -573,29 +708,72 @@ class ScotchRAGApp:
                     .then(response => response.json())
                     .then(data => {
                         removeLoadingMessage(loadingId);
-                        addMessage(data.answer, 'bot');
+                        if (data.success) {
+                            addMessage(data.answer, 'bot');
+                        } else {
+                            addErrorMessage(data.error || 'An error occurred', question);
+                        }
                     })
                     .catch(error => {
                         removeLoadingMessage(loadingId);
-                        addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+                        addErrorMessage('Network error. Please check your connection.', question);
+                    })
+                    .finally(() => {
+                        // Re-enable input and button
+                        questionInput.disabled = false;
+                        sendBtn.disabled = false;
+                        questionInput.focus();
                     });
                 }
                 
                 function addMessage(text, sender) {
                     const messageDiv = document.createElement('div');
                     messageDiv.className = `message ${sender}`;
-                    messageDiv.textContent = text;
+                    
+                    // Create message content with timestamp
+                    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    messageDiv.innerHTML = `
+                        <div>${escapeHtml(text)}</div>
+                        <span class="message-timestamp">${timestamp}</span>
+                    `;
+                    
                     chatMessages.appendChild(messageDiv);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    scrollToBottom();
+                }
+                
+                function addErrorMessage(error, originalQuestion) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error-message';
+                    errorDiv.innerHTML = `
+                        <span>⚠️ ${escapeHtml(error)}</span>
+                        <button class="retry-btn" onclick="retryQuestion('${escapeHtml(originalQuestion)}')">Retry</button>
+                    `;
+                    chatMessages.appendChild(errorDiv);
+                    scrollToBottom();
+                }
+                
+                function retryQuestion(question) {
+                    // Remove the error message
+                    const errorMessage = document.querySelector('.error-message');
+                    if (errorMessage) {
+                        errorMessage.remove();
+                    }
+                    
+                    // Set the question back in the input and retry
+                    questionInput.value = question;
+                    askQuestion();
                 }
                 
                 function addLoadingMessage() {
                     const loadingDiv = document.createElement('div');
                     loadingDiv.className = 'loading';
                     loadingDiv.id = 'loading-' + Date.now();
-                    loadingDiv.textContent = 'Thinking...';
+                    loadingDiv.innerHTML = `
+                        <div class="loading-spinner"></div>
+                        <span>Thinking...</span>
+                    `;
                     chatMessages.appendChild(loadingDiv);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    scrollToBottom();
                     return loadingDiv.id;
                 }
                 
@@ -605,6 +783,37 @@ class ScotchRAGApp:
                         loadingDiv.remove();
                     }
                 }
+                
+                function scrollToBottom() {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+                
+                function scrollToTop() {
+                    chatMessages.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                }
+                
+                function handleScroll() {
+                    // Show/hide scroll to top button based on scroll position
+                    if (chatMessages.scrollTop > 300) {
+                        scrollToTopBtn.classList.add('visible');
+                    } else {
+                        scrollToTopBtn.classList.remove('visible');
+                    }
+                }
+                
+                function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+                
+                // Focus input on page load
+                window.addEventListener('load', () => {
+                    questionInput.focus();
+                });
                 """
             ),
         )
