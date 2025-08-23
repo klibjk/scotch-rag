@@ -235,105 +235,43 @@ Please use the schema context above to understand the database structure and pro
             print(f"❌ Setup failed: {e}")
             self.query_engine = None
     
-    def break_down_complex_query(self, question):
-        """Break down complex queries into simpler parts"""
-        complex_indicators = [
-            "and what", "and why", "and how", "and when", "and where",
-            "highest balance", "most recent", "recommend", "compare",
-            "for each", "total value", "all filled", "group by", "sum of"
-        ]
-        
-        question_lower = question.lower()
-        
-        # Check if it's a complex query
-        is_complex = any(indicator in question_lower for indicator in complex_indicators)
-        
-        if not is_complex:
-            return [question]
-        
-        # Break down complex queries
-        if "and what" in question_lower:
-            parts = question.split(" and what")
-            return [parts[0], "What is " + parts[1].lstrip()]
-        
-        elif "and why" in question_lower:
-            parts = question.split(" and why")
-            return [parts[0], "Why " + parts[1].lstrip()]
-        
-        elif "highest balance" in question_lower and "most recent" in question_lower:
-            return [
-                "Which account has the highest balance?",
-                "What is the most recent order?"
-            ]
-        
-        elif "recommend" in question_lower:
-            return [
-                "What are the available securities?",
-                "What are their risk levels and fees?"
-            ]
-        
-        # Handle "for each" analytical queries
-        elif "for each" in question_lower:
-            if "total value" in question_lower and "filled orders" in question_lower:
-                return [
-                    "What are all the accounts?",
-                    "What are all the filled orders?",
-                    "What is the total value of orders for each account?"
-                ]
-            elif "account" in question_lower:
-                return [
-                    "What are all the accounts?",
-                    "What information do you want for each account?"
-                ]
-        
-        # Handle aggregation queries
-        elif "total value" in question_lower:
-            return [
-                "What orders are there?",
-                "What is the total value of all orders?"
-            ]
-        
-        # Handle "all filled" queries
-        elif "all filled" in question_lower:
-            return [
-                "What are the filled orders?",
-                "What information do you want about filled orders?"
-            ]
-        
-        return [question]
+
     
     def analyze_query_complexity_with_llm(self, question):
-        """Use LLM to analyze query complexity and suggest breakdown strategies"""
+        """Use LLM to analyze query complexity and suggest breakdown strategies in ONE API call"""
         try:
-            # Create a prompt for the LLM to analyze the query
+            # Single comprehensive prompt that does both analysis and breakdown
             analysis_prompt = f"""
-Analyze this database query question and determine if it needs to be broken down into simpler parts.
+You are a database query analyzer. Given a user question, determine if it needs to be broken down into simpler, executable sub-queries.
 
 Question: "{question}"
 
-Available tables and their key columns:
+Available database schema:
 - accounts_orders_orders: order_id, account_id, security, order_type, quantity, price, status, placed_time, executed_time
-- accounts_orders_accounts: account_id, owner, account_type, balance
+- accounts_orders_accounts: account_id, owner, account_type, balance  
 - securities_info_securities: security_id, name, type, current_price, risk_level
 - securities_info_fees: security_id, fee_type, amount
 - securities_info_holdings: etf_id, holding_security, weight_percent
 
 Instructions:
-1. If the query is simple (single table, basic filtering), respond with: "SIMPLE"
-2. If the query is complex (multiple tables, joins, aggregations, multiple conditions), respond with: "COMPLEX"
-3. If complex, suggest 2-3 specific, executable questions that use only the available columns.
+1. Determine if this is a SIMPLE query (single table, basic operations) or COMPLEX query (multiple tables, joins, aggregations, multiple conditions)
+2. If COMPLEX, break it down into 2-4 specific, executable sub-questions
+3. Each sub-question should be self-contained and use only the available columns
+4. Ensure sub-questions can be executed independently
 
 Examples:
 - "What is the status of order O1001?" → SIMPLE
-- "Which account has the highest balance, and what is their most recent order?" → COMPLEX
-  - "Which account has the highest balance?"
-  - "What is the most recent order by placed_time?"
-- "For each account, what is the total value of all filled orders?" → COMPLEX
-  - "What are all the account_ids?"
-  - "What are all the filled orders with their quantities and prices?"
-  - "What is the total value (quantity * price) for each account?"
+- "Which account has the highest balance and what is their most recent order?" → COMPLEX
+  Sub-questions:
+  1. "Which account has the highest balance?"
+  2. "What is the most recent order by placed_time?"
+- "For each account, show the total value of filled orders and the owner name" → COMPLEX
+  Sub-questions:
+  1. "What are all the accounts with their owners?"
+  2. "What are all the filled orders with quantities and prices?"
+  3. "What is the total value (quantity * price) for each account?"
 
-Your analysis:
+Your analysis for the given question:
 """
 
             # Use the query engine's LLM to analyze
@@ -342,67 +280,83 @@ Your analysis:
             
             print(f"🔍 LLM Analysis: {analysis}")
             
-            # Parse the response
+            # Parse the response to extract complexity and sub-questions
             if "SIMPLE" in analysis.upper():
-                return {"complexity": "simple", "breakdown": [question]}
+                return {"complexity": "simple", "breakdown": [question], "llm_analysis": analysis}
             elif "COMPLEX" in analysis.upper():
-                # Extract suggested questions from the response
+                # Extract sub-questions from the response
+                sub_questions = []
                 lines = analysis.split('\n')
-                breakdown = []
+                
                 for line in lines:
                     line = line.strip()
-                    if (line.startswith('-') or line.startswith('•') or 
-                        line.startswith('1.') or line.startswith('2.') or line.startswith('3.')):
-                        # Extract the question from the bullet point
-                        question_part = line
-                        # Remove bullet points and numbers
-                        for prefix in ['- ', '• ', '1. ', '2. ', '3. ']:
-                            if question_part.startswith(prefix):
-                                question_part = question_part[len(prefix):]
+                    # Look for numbered or bulleted sub-questions
+                    if (line.startswith(('1.', '2.', '3.', '4.', '-', '•')) and 
+                        '?' in line and len(line) > 20):
+                        # Clean up the line
+                        for prefix in ['1. ', '2. ', '3. ', '4. ', '- ', '• ']:
+                            if line.startswith(prefix):
+                                line = line[len(prefix):]
                                 break
                         
                         # Remove quotes if present
-                        if question_part.startswith('"') and question_part.endswith('"'):
-                            question_part = question_part[1:-1]
+                        if line.startswith('"') and line.endswith('"'):
+                            line = line[1:-1]
                         
-                        if question_part and len(question_part) > 10:  # Ensure it's a real question
-                            breakdown.append(question_part)
+                        if line and len(line) > 10:
+                            sub_questions.append(line)
                 
-                if breakdown:
-                    return {"complexity": "complex", "breakdown": breakdown}
+                if sub_questions:
+                    return {"complexity": "complex", "breakdown": sub_questions, "llm_analysis": analysis}
                 else:
-                    # Fallback: use basic breakdown
-                    return {"complexity": "complex", "breakdown": [question]}
+                    # Fallback: treat as simple if we can't parse sub-questions
+                    return {"complexity": "simple", "breakdown": [question], "llm_analysis": analysis}
             else:
-                # If LLM analysis is unclear, treat as simple
-                return {"complexity": "simple", "breakdown": [question]}
+                # If analysis is unclear, treat as simple
+                return {"complexity": "simple", "breakdown": [question], "llm_analysis": analysis}
                 
         except Exception as e:
             print(f"❌ LLM analysis failed: {e}")
             # Fallback to simple
-            return {"complexity": "simple", "breakdown": [question]}
+            return {"complexity": "simple", "breakdown": [question], "llm_analysis": f"Analysis failed: {e}"}
     
     def query(self, question):
-        """Smart query with LLM-based complexity analysis"""
+        """Smart query with single LLM call for complexity analysis and breakdown"""
         if not self.query_engine:
-            return "❌ Query engine not available"
+            return {"answer": "❌ Query engine not available", "logs": []}
         
+        logs = []
         try:
-            # Use LLM to analyze query complexity
-            print("🔍 Analyzing query complexity with LLM...")
+            # Single LLM call to analyze complexity and get breakdown
+            log_entry = "🔍 Analyzing query complexity and breakdown with LLM..."
+            print(log_entry)
+            logs.append(log_entry)
+            
             analysis = self.analyze_query_complexity_with_llm(question)
             
+            # Add LLM analysis to logs
+            if "llm_analysis" in analysis:
+                log_entry = f"🤖 LLM Analysis: {analysis['llm_analysis'][:200]}..."
+                print(log_entry)
+                logs.append(log_entry)
+            
             if analysis["complexity"] == "complex":
-                print("🔄 LLM detected complex query, breaking down...")
+                log_entry = "🔄 LLM detected complex query, breaking down..."
+                print(log_entry)
+                logs.append(log_entry)
+                
                 sub_questions = analysis["breakdown"]
                 
                 if len(sub_questions) > 1:
                     answers = []
                     
                     for i, sub_q in enumerate(sub_questions, 1):
-                        print(f"  {i}. {sub_q}")
+                        log_entry = f"  {i}. {sub_q}"
+                        print(log_entry)
+                        logs.append(log_entry)
+                        
                         try:
-                            # Use enhanced prompt for sub-questions too
+                            # Use enhanced prompt for sub-questions
                             enhanced_sub_prompt = self.create_enhanced_prompt(sub_q)
                             sub_response = self.query_engine.query(enhanced_sub_prompt)
                             sub_answer = str(sub_response)
@@ -414,7 +368,9 @@ Your analysis:
                                 # Try to simplify the sub-question
                                 simplified_sub_q = self.simplify_sub_question(sub_q)
                                 if simplified_sub_q != sub_q:
-                                    print(f"    ⚠️ Trying simplified: {simplified_sub_q}")
+                                    log_entry = f"    ⚠️ Trying simplified: {simplified_sub_q}"
+                                    print(log_entry)
+                                    logs.append(log_entry)
                                     enhanced_simplified_prompt = self.create_enhanced_prompt(simplified_sub_q)
                                     sub_response = self.query_engine.query(enhanced_simplified_prompt)
                                     sub_answer = str(sub_response)
@@ -428,10 +384,14 @@ Your analysis:
                     for i, (sub_q, ans) in enumerate(zip(sub_questions, answers), 1):
                         combined_answer += f"{i}. {sub_q}: {ans}\n"
                     
-                    return combined_answer
+                    return {"answer": combined_answer, "logs": logs}
             
             # Try direct query with enhanced prompt (either simple or complex that couldn't be broken down)
-            print("🔄 Attempting direct query with enhanced context...")
+            log_entry = "🔄 Attempting direct query with enhanced context..."
+            print(log_entry)
+            logs.append(log_entry)
+            
+            enhanced_prompt = self.create_enhanced_prompt(question)
             response = self.query_engine.query(enhanced_prompt)
             answer = str(response)
             
@@ -439,7 +399,11 @@ Your analysis:
             if any(error_indicator in answer.lower() for error_indicator in [
                 "invalid", "error", "not found", "does not exist", "column", "table", "references a column"
             ]):
-                print("⚠️ Direct query had issues, trying LLM breakdown as fallback...")
+                log_entry = "⚠️ Direct query had issues, trying LLM breakdown as fallback..."
+                print(log_entry)
+                logs.append(log_entry)
+                
+                # Re-analyze with more specific prompt for errors
                 analysis = self.analyze_query_complexity_with_llm(question)
                 sub_questions = analysis["breakdown"]
                 
@@ -460,22 +424,27 @@ Your analysis:
                     for i, (sub_q, ans) in enumerate(zip(sub_questions, answers), 1):
                         combined_answer += f"{i}. {sub_q}: {ans}\n"
                     
-                    return combined_answer
+                    return {"answer": combined_answer, "logs": logs}
             
-            return answer
+            return {"answer": answer, "logs": logs}
             
         except Exception as e:
-            print(f"❌ Query failed: {e}")
+            log_entry = f"❌ Query failed: {e}"
+            print(log_entry)
+            logs.append(log_entry)
             
             # Try a simpler approach
             try:
-                print("🔄 Trying simplified query...")
+                log_entry = "🔄 Trying simplified query..."
+                print(log_entry)
+                logs.append(log_entry)
+                
                 simplified_question = self.simplify_question(question)
                 enhanced_simplified_prompt = self.create_enhanced_prompt(simplified_question)
                 response = self.query_engine.query(enhanced_simplified_prompt)
-                return f"Simplified answer: {response}"
+                return {"answer": f"Simplified answer: {response}", "logs": logs}
             except Exception as e2:
-                return f"❌ Query failed: {e2}"
+                return {"answer": f"❌ Query failed: {e2}", "logs": logs}
     
     def simplify_question(self, question):
         """Simplify complex questions"""
@@ -521,8 +490,8 @@ Your analysis:
         return question
 
 def test_smart_engine():
-    """Test the smart query engine"""
-    print("🧪 Testing Smart Query Engine")
+    """Test the smart query engine with single LLM call optimization"""
+    print("🧪 Testing Smart Query Engine (Single LLM Call)")
     print("=" * 50)
     
     engine = SmartQueryEngine()
@@ -530,14 +499,13 @@ def test_smart_engine():
     # Test questions of varying complexity
     test_questions = [
         # Simple questions
-        # "What is the status of order O1001?",
-        # "How many orders are there?",
-        # "What is the highest balance?",
+        "What is the status of order O1001?",
+        "How many orders are there?",
+        "What is the highest balance?",
         
         # Complex questions
-        # "Which account has the highest balance, and what is their most recent order?",
-        # "Which security has the highest management fee, and what is its risk level?",
-        # "Which ETF would you recommend for someone seeking stability, and why?",
+        "Which account has the highest balance, and what is their most recent order?",
+        "Which security has the highest management fee, and what is its risk level?",
         "Who owns the account with the highest balance, and what is their most recent order?",
         "For each account, what is the total value of all filled orders?"
     ]

@@ -41,7 +41,7 @@ def configure_dspy():
     if openai_key:
         try:
             print("🟢 Using OpenAI GPT-4 as primary LLM")
-            lm = dspy.LM("openai/gpt-4", api_key=openai_key)
+            lm = dspy.LM("openai/gpt-5", api_key=openai_key)
             dspy.configure(lm=lm)
             return "openai"
         except Exception as e:
@@ -245,6 +245,22 @@ Column Explanations:
 Provide a concise, accurate answer to the user's question, using only the data and explanations above. Do not fabricate numbers. If the answer is not in the data, say so.
 """
     try:
+        import openai
+        client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+        response = client.chat.completions.create(
+            model="gpt-5",
+            max_tokens=256,
+            temperature=0.2,
+            messages=[
+                {"role": "system", "content": "You are a data analyst assistant. Provide concise, accurate answers based only on the provided data."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"OpenAI synthesis failed: {e}")
+        pass
+    try:
         import dspy
         response = dspy.Predict(prompt)
         return response.completion if hasattr(response, 'completion') else str(response)
@@ -263,7 +279,7 @@ Provide a concise, accurate answer to the user's question, using only the data a
         return message.content[0].text if hasattr(message, 'content') else str(message)
     except Exception:
         pass
-    return "[LLM synthesis unavailable: DSPy Anthropic and anthropic SDK not available or not configured]"
+    return "[LLM synthesis unavailable: OpenAI, DSPy, and Anthropic SDK not available or not configured]"
 
 # Initialize the agent
 agent = StockRecommenderAgent()
@@ -494,203 +510,10 @@ async def query_db_slash(interaction: discord.Interaction, question: str):
         await interaction.followup.send(embed=error_embed)
 
 # --- Smart Query Engine Class ---
-class SmartQueryEngine:
-    """Enhanced LlamaIndex query engine with better handling of complex queries"""
-    
-    def __init__(self):
-        self.engine = None
-        self.query_engine = None
-        self.setup_engine()
-    
-    def setup_engine(self):
-        """Setup LlamaIndex query engine"""
-        try:
-            from llama_index.core import SQLDatabase
-            from llama_index.core.query_engine import NLSQLTableQueryEngine
-            from sqlalchemy import create_engine
-            import glob
-            import pandas as pd
-            import os
-            
-            # Setup SQLite database
-            self.engine = create_engine("sqlite:///:memory:")
-            
-            # Load parquet files
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            data_dir = os.path.join(script_dir, "data")
-            parquet_files = glob.glob(os.path.join(data_dir, "*.parquet"))
-            
-            for pf in parquet_files:
-                table_name = os.path.splitext(os.path.basename(pf))[0]
-                df = pd.read_parquet(pf)
-                df.to_sql(table_name, self.engine, if_exists='replace', index=False)
-            
-            # Create LlamaIndex query engine
-            sql_db = SQLDatabase(self.engine)
-            self.query_engine = NLSQLTableQueryEngine(sql_database=sql_db)
-            
-        except Exception as e:
-            print(f"❌ Smart Query Engine setup failed: {e}")
-            self.query_engine = None
-    
-    def break_down_complex_query(self, question):
-        """Break down complex queries into simpler parts"""
-        complex_indicators = [
-            "and what", "and why", "and how", "and when", "and where",
-            "highest balance", "most recent", "recommend", "compare",
-            "for each", "total value", "all filled", "group by", "sum of"
-        ]
-        
-        question_lower = question.lower()
-        
-        # Check if it's a complex query
-        is_complex = any(indicator in question_lower for indicator in complex_indicators)
-        
-        if not is_complex:
-            return [question]
-        
-        # Break down complex queries
-        if "and what" in question_lower:
-            parts = question.split(" and what")
-            return [parts[0], "What is " + parts[1].lstrip()]
-        
-        elif "and why" in question_lower:
-            parts = question.split(" and why")
-            return [parts[0], "Why " + parts[1].lstrip()]
-        
-        elif "highest balance" in question_lower and "most recent" in question_lower:
-            return [
-                "Which account has the highest balance?",
-                "What is the most recent order?"
-            ]
-        
-        elif "recommend" in question_lower:
-            return [
-                "What are the available securities?",
-                "What are their risk levels and fees?"
-            ]
-        
-        # Handle "for each" analytical queries
-        elif "for each" in question_lower:
-            if "total value" in question_lower and "filled orders" in question_lower:
-                return [
-                    "What are all the accounts?",
-                    "What are all the filled orders?",
-                    "What is the total value of orders for each account?"
-                ]
-            elif "account" in question_lower:
-                return [
-                    "What are all the accounts?",
-                    "What information do you want for each account?"
-                ]
-        
-        # Handle aggregation queries
-        elif "total value" in question_lower:
-            return [
-                "What orders are there?",
-                "What is the total value of all orders?"
-            ]
-        
-        # Handle "all filled" queries
-        elif "all filled" in question_lower:
-            return [
-                "What are the filled orders?",
-                "What information do you want about filled orders?"
-            ]
-        
-        return [question]
-    
-    def query(self, question):
-        """Smart query with fallback strategies"""
-        if not self.query_engine:
-            return "❌ Query engine not available"
-        
-        try:
-            # Check if it's a complex query that should be broken down proactively
-            question_lower = question.lower()
-            complex_patterns = [
-                "for each", "total value", "all filled", "group by", "sum of",
-                "and what", "and why", "highest balance", "most recent"
-            ]
-            
-            should_break_down = any(pattern in question_lower for pattern in complex_patterns)
-            
-            if should_break_down:
-                print("🔄 Detected complex query, breaking down proactively...")
-                sub_questions = self.break_down_complex_query(question)
-                
-                if len(sub_questions) > 1:
-                    answers = []
-                    
-                    for sub_q in sub_questions:
-                        try:
-                            sub_response = self.query_engine.query(sub_q)
-                            answers.append(str(sub_response))
-                        except Exception as e:
-                            answers.append(f"Error: {e}")
-                    
-                    # Combine answers
-                    combined_answer = f"Based on the breakdown:\n"
-                    for i, (sub_q, ans) in enumerate(zip(sub_questions, answers), 1):
-                        combined_answer += f"{i}. {sub_q}: {ans}\n"
-                    
-                    return combined_answer
-            
-            # Try direct query first
-            response = self.query_engine.query(question)
-            answer = str(response)
-            
-            # Check if the answer seems incomplete or has errors
-            if any(error_indicator in answer.lower() for error_indicator in [
-                "invalid", "error", "not found", "does not exist", "column", "table", "does not exist in the table", "column.*does not exist", "references a column", "does not exist in the table"
-            ]):
-                # Break down complex query
-                sub_questions = self.break_down_complex_query(question)
-                
-                if len(sub_questions) > 1:
-                    answers = []
-                    
-                    for sub_q in sub_questions:
-                        try:
-                            sub_response = self.query_engine.query(sub_q)
-                            answers.append(str(sub_response))
-                        except Exception as e:
-                            answers.append(f"Error: {e}")
-                    
-                    # Combine answers
-                    combined_answer = f"Based on the breakdown:\n"
-                    for i, (sub_q, ans) in enumerate(zip(sub_questions, answers), 1):
-                        combined_answer += f"{i}. {sub_q}: {ans}\n"
-                    
-                    return combined_answer
-            
-            return answer
-            
-        except Exception as e:
-            # Try a simpler approach
-            try:
-                simplified_question = self.simplify_question(question)
-                response = self.query_engine.query(simplified_question)
-                return f"Simplified answer: {response}"
-            except Exception as e2:
-                return f"❌ Query failed: {e2}"
-    
-    def simplify_question(self, question):
-        """Simplify complex questions"""
-        question_lower = question.lower()
-        
-        if "and what" in question_lower:
-            return question.split(" and what")[0] + "?"
-        
-        if "and why" in question_lower:
-            return question.split(" and why")[0] + "?"
-        
-        if "highest balance" in question_lower and "most recent" in question_lower:
-            return "Which account has the highest balance?"
-        
-        return question
+# Import the improved SmartQueryEngine from the separate file
+from smart_query_engine import SmartQueryEngine
 
-# Initialize Smart Query Engine (now with metadata enhancement)
+# Initialize Smart Query Engine (using optimized single LLM call version)
 smart_engine = SmartQueryEngine()
 
 
@@ -701,13 +524,31 @@ async def llama_query_slash(interaction: discord.Interaction, question: str):
     await interaction.response.defer()
     try:
         # Use the Smart Query Engine for enhanced LlamaIndex functionality
-        response = smart_engine.query(question)
+        result = smart_engine.query(question)
         
+        # Extract answer and logs
+        answer = result.get("answer", "No answer generated")
+        logs = result.get("logs", [])
+        
+        # Create main embed with answer
         embed = discord.Embed(
             title="🦙 LlamaIndex Query Result",
-            description=f"**Question:** {question}\n\n**Answer:**\n{response}",
+            description=f"**Question:** {question}\n\n**Answer:**\n{answer}",
             color=0x4e8cff
         )
+        
+        # Add logs if available
+        if logs:
+            log_text = "\n".join(logs[:10])  # Limit to first 10 log entries
+            if len(logs) > 10:
+                log_text += f"\n... and {len(logs) - 10} more steps"
+            
+            embed.add_field(
+                name="🔍 **LLM Thinking Process**",
+                value=f"```\n{log_text}\n```",
+                inline=False
+            )
+        
         await interaction.followup.send(embed=embed)
         
     except Exception as e:

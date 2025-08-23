@@ -444,3 +444,19 @@ sudo journalctl -u discord-bot-multi -n 100 --no-pager | cat
 sudo journalctl -u discord-bot-single -n 100 --no-pager | cat
 sudo journalctl -u discord-bot-graph -n 100 --no-pager | cat
 sudo journalctl -u discord-bot-dspy -n 100 --no-pager | cat
+
+
+# Stop the service
+sudo systemctl stop discord-bot
+
+# Start the service
+sudo systemctl start discord-bot
+
+# Restart the service
+sudo systemctl restart discord-bot
+
+# Check if service is enabled (auto-start on boot)
+sudo systemctl is-enabled discord-bot
+
+# View real-time logs
+sudo journalctl -u discord-bot -f | cat
