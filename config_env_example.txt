@@ -1,0 +1,43 @@
+# Scotch-RAG Environment Variables
+# Copy this file to .env and fill in your actual API keys
+
+# OpenAI Configuration (Matching Original RAG System)
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-5-mini
+OPENAI_TEMPERATURE=0.1
+OPENAI_MAX_TOKENS=2000
+RAG_CHUNK_SIZE=800
+RAG_CHUNK_OVERLAP=50
+
+# Anthropic Configuration (Optional - for LLM fallback)
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# Discord Bot Configuration (Optional - for Discord integration)
+RAG_DISCORD_TOKEN=your_discord_bot_token_here
+
+# LlamaParse Configuration (Optional - for enhanced Excel processing)
+LLAMA_CLOUD_API_KEY=your_llama_cloud_api_key_here
+
+# Tavily Configuration (Optional - for web search)
+TAVILY_API_KEY=your_tavily_api_key_here
+
+# Google Configuration (Optional - for LLM fallback)
+GOOGLE_API_KEY=your_google_api_key_here
+
+# AWS Configuration (for production deployment)
+AWS_ACCESS_KEY_ID=your_aws_access_key_here
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key_here
+AWS_DEFAULT_REGION=us-east-1
+
+# Database Configuration (for production)
+DATABASE_URL=your_database_url_here
+
+# Redis Configuration (Optional - for caching)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=your_redis_password_here
+
+# Application Configuration
+DEBUG=True
+SECRET_KEY=your_secret_key_here
+ALLOWED_HOSTS=localhost,127.0.0.1
