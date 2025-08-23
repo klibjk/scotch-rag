@@ -1,0 +1,42 @@
+# Discord RAG Bot Requirements
+# ===========================
+
+# Core Discord dependencies
+discord.py>=2.3.0
+py-cord>=2.4.0
+
+# RAG System dependencies
+langchain>=0.1.0
+langchain-openai>=0.1.0
+langchain-community>=0.0.20
+langchain-text-splitters>=0.0.1
+faiss-cpu>=1.7.4
+openai>=1.0.0
+python-dotenv>=1.0.0
+
+# Document processing
+llama-parse>=0.3.0
+pandas>=2.0.0
+openpyxl>=3.1.0
+PyPDF2>=3.0.0
+
+# Optional fallbacks
+langchain-anthropic>=0.2.0
+langchain-google-genai>=0.1.0
+langchain-pinecone>=0.1.0
+redis>=4.5.0
+unstructured>=0.10.0
+sentence-transformers>=2.2.0
+
+# Web search (optional)
+tavily-python>=0.3.0
+
+# File monitoring
+watchdog>=3.0.0
+
+# Rich terminal interface (for logging)
+rich>=13.0.0
+
+# Additional utilities
+aiofiles>=23.0.0
+asyncio-mqtt>=0.16.0

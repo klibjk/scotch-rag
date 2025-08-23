@@ -13,7 +13,7 @@ from typing import Optional
 import traceback
 from pathlib import Path
 
-from rag.rag_system_v1 import get_rag_system
+from rag_system_v1 import get_rag_system
 from file_monitor import get_file_monitor
 
 # Bot configuration
