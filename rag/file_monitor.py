@@ -16,7 +16,7 @@ from watchdog.events import FileSystemEventHandler
 from rich.console import Console
 from rich.panel import Panel
 
-from rag.rag_system_v1 import get_rag_system
+from rag_system_v1 import get_rag_system
 
 console = Console()
 

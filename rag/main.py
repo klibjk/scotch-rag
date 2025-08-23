@@ -15,7 +15,7 @@ from rich.table import Table
 from rich.prompt import Prompt, Confirm
 from rich import print as rprint
 
-from rag.rag_system_v1 import get_rag_system
+from rag_system_v1 import get_rag_system
 from file_monitor import get_file_monitor
 
 console = Console()
