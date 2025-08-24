@@ -65,8 +65,8 @@ def create_rag_config():
     """Create RAG configuration from environment variables."""
     return {
         "base_storage_dir": os.getenv("RAG_INDEX_PATH", "./faiss_indexes"),
-        "chunk_size": int(os.getenv("RAG_CHUNK_SIZE", "800")),
-        "chunk_overlap": int(os.getenv("RAG_CHUNK_OVERLAP", "50")),
+        "chunk_size": int(os.getenv("RAG_CHUNK_SIZE", "250")),
+        "chunk_overlap": int(os.getenv("RAG_CHUNK_OVERLAP", "100")),
         "max_retrieval_results": int(os.getenv("RAG_MAX_RETRIEVAL", "7")),
     }
 

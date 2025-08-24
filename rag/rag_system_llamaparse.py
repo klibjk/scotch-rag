@@ -168,8 +168,8 @@ class RAGSystemLlamaParse:
 
         # Text splitter for chunking
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=600,  # Smaller chunks for faster retrieval
-            chunk_overlap=30,  # Reduced overlap
+            chunk_size=250,  # Smaller chunks for more precise retrieval
+            chunk_overlap=100,  # Increased overlap for better context
             length_function=len,
         )
 
@@ -644,8 +644,8 @@ class RAGSystemLlamaParse:
                 text_content += f"Columns: {', '.join(df.columns)}\n"
                 text_content += f"Total rows: {len(df)}\n\n"
 
-                # Add sample data (first 10 rows)
-                for idx, row in df.head(10).iterrows():
+                # Add all data rows
+                for idx, row in df.iterrows():
                     row_text = f"Row {idx + 1}: "
                     for col in df.columns:
                         row_text += f"{col}: {row[col]} | "
@@ -897,6 +897,32 @@ class RAGSystemLlamaParse:
         self, query: str, keywords: List[str], intent: str, language: str
     ) -> str:
         """Enhance query for better retrieval with rule-based fallback"""
+        query_lower = query.lower()
+
+        # Handle "first product" queries specifically
+        if any(
+            phrase in query_lower
+            for phrase in [
+                "first product",
+                "first item",
+                "first row",
+                "row 1",
+                "row one",
+            ]
+        ):
+            # Enhance to be more specific about finding the first product in the data
+            enhanced = (
+                f"{query} (find the product name from the first row of data, Row 1)"
+            )
+            print(f"🔍 Enhanced 'first product' query: {enhanced}")
+            return enhanced
+
+        # Handle "product name" queries
+        if "product name" in query_lower and "first" in query_lower:
+            enhanced = f"{query} (locate the product name from Row 1 of the dataset)"
+            print(f"🔍 Enhanced 'first product name' query: {enhanced}")
+            return enhanced
+
         try:
             # Try to enhance with LLM
             prompt = f"""
