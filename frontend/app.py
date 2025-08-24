@@ -24,6 +24,7 @@ except ImportError:
     MonsterUI_AVAILABLE = False
 
 from rag.rag_system import RAGSystem
+from rag.rag_system_llamaparse import RAGSystemLlamaParse
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +34,18 @@ class ScotchRAGApp:
     Main FastHTML + MonsterUI application for Scotch-RAG.
     """
 
-    def __init__(self, rag_system: RAGSystem):
+    def __init__(
+        self, rag_system_pandas: RAGSystem, rag_system_llamaparse: RAGSystemLlamaParse
+    ):
         """
         Initialize the application.
 
         Args:
-            rag_system: Initialized RAG system instance
+            rag_system_pandas: Initialized pandas-based RAG system instance
+            rag_system_llamaparse: Initialized LlamaParse-based RAG system instance
         """
-        self.rag_system = rag_system
+        self.rag_system_pandas = rag_system_pandas
+        self.rag_system_llamaparse = rag_system_llamaparse
         self.app = None
         self.conversation_history = []
 
@@ -67,13 +72,29 @@ class ScotchRAGApp:
         def chat():
             return self.chat_page()
 
+        @self.rt("/chat-pandas")
+        def chat_pandas():
+            return self.chat_page("pandas")
+
+        @self.rt("/chat-llamaparse")
+        def chat_llamaparse():
+            return self.chat_page("llamaparse")
+
         @self.rt("/api/upload")
         def api_upload(request):
             return self.api_upload(request)
 
         @self.rt("/api/ask")
         def api_ask(request):
-            return self.api_ask(request)
+            return self.api_ask(request, "pandas")
+
+        @self.rt("/api/ask-pandas")
+        def api_ask_pandas(request):
+            return self.api_ask(request, "pandas")
+
+        @self.rt("/api/ask-llamaparse")
+        def api_ask_llamaparse(request):
+            return self.api_ask(request, "llamaparse")
 
         @self.rt("/api/status")
         def api_status(request):
@@ -124,8 +145,55 @@ class ScotchRAGApp:
                         cls="features",
                     ),
                     Div(
-                        A("📤 Upload Documents", href="/upload", cls="btn"),
-                        A("💬 Start Chatting", href="/chat", cls="btn btn-secondary"),
+                        H3(
+                            "📚 Test Document Ready",
+                            style="text-align: center; margin-bottom: 20px; color: #333;",
+                        ),
+                        P(
+                            "The test document (scotch_product_catalog.xlsx) is already loaded into both RAG systems. Choose your preferred parser to start chatting:",
+                            style="text-align: center; color: #666; margin-bottom: 30px;",
+                        ),
+                        H3(
+                            "Choose Your Parser:",
+                            style="text-align: center; margin-bottom: 20px; color: #333;",
+                        ),
+                        Div(
+                            Div(
+                                H4(
+                                    "🐼 Pandas Parser",
+                                    style="color: #667eea; margin-bottom: 10px;",
+                                ),
+                                P(
+                                    "Fast Excel processing with simple text conversion",
+                                    style="color: #666; margin-bottom: 15px;",
+                                ),
+                                A(
+                                    "🚀 Start Pandas Chat",
+                                    href="/chat-pandas",
+                                    cls="btn",
+                                    style="background: #667eea;",
+                                ),
+                                cls="parser-option",
+                            ),
+                            Div(
+                                H4(
+                                    "🦙 LlamaParse Parser",
+                                    style="color: #f5576c; margin-bottom: 10px;",
+                                ),
+                                P(
+                                    "Enhanced document understanding with structured data extraction",
+                                    style="color: #666; margin-bottom: 15px;",
+                                ),
+                                A(
+                                    "🚀 Start LlamaParse Chat",
+                                    href="/chat-llamaparse",
+                                    cls="btn",
+                                    style="background: #f5576c;",
+                                ),
+                                cls="parser-option",
+                            ),
+                            cls="parser-options",
+                        ),
                         cls="cta-buttons",
                     ),
                     cls="content",
@@ -191,6 +259,25 @@ class ScotchRAGApp:
                 .cta-buttons {
                     text-align: center;
                     margin: 40px 0;
+                }
+                .parser-options {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 30px;
+                    margin-top: 20px;
+                }
+                .parser-option {
+                    background: #f8f9fa;
+                    padding: 25px;
+                    border-radius: 15px;
+                    text-align: center;
+                    border: 2px solid transparent;
+                    transition: all 0.3s ease;
+                }
+                .parser-option:hover {
+                    border-color: #667eea;
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
                 }
                 .btn {
                     display: inline-block;
@@ -417,13 +504,17 @@ class ScotchRAGApp:
             ),
         )
 
-    def chat_page(self):
+    def chat_page(self, parser_type="pandas"):
         """Render the chat interface page."""
+        parser_name = "Pandas" if parser_type == "pandas" else "LlamaParse"
+        api_endpoint = (
+            f"/api/ask-{parser_type}" if parser_type != "pandas" else "/api/ask"
+        )
         return Titled(
             "Chat - Scotch-RAG",
             Div(
                 Div(
-                    H1("💬 Scotch-RAG Chat"),
+                    H1(f"💬 Scotch-RAG Chat ({parser_name})"),
                     P("Ask questions about your uploaded documents"),
                     cls="header",
                 ),
@@ -710,7 +801,9 @@ class ScotchRAGApp:
                     const loadingId = addLoadingMessage();
                     
                     // Send question to API
-                    fetch('/api/ask', {
+                    fetch('"""
+                + api_endpoint
+                + """', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -833,70 +926,85 @@ class ScotchRAGApp:
     def api_upload(self, request):
         """Handle file upload API endpoint."""
         try:
-            # Get uploaded files from the request
-            files = request.files()
+            # For now, let's create a simple test to see what we're getting
+            try:
+                body_data = request.body()
+                logger.info(f"Request body type: {type(body_data)}")
+                logger.info(f"Request body: {body_data}")
+            except Exception as e:
+                logger.info(f"Could not get request body: {e}")
 
-            if not files:
-                return JSONResponse({"success": False, "error": "No files uploaded"})
+            # Since FastHTML doesn't handle multipart form data like FastAPI,
+            # let's create a simple test upload that works with the existing file
+            # For now, we'll use the existing scotch_product_catalog.xlsx file
 
-            uploaded_files = []
-            for file in files:
-                try:
-                    # Save the uploaded file temporarily
-                    import tempfile
-                    import os
+            test_file_path = "rag/data/scotch_product_catalog.xlsx"
 
-                    # Create uploads directory if it doesn't exist
-                    upload_dir = Path("data/uploads")
-                    upload_dir.mkdir(parents=True, exist_ok=True)
+            if not os.path.exists(test_file_path):
+                return JSONResponse({"success": False, "error": "Test file not found"})
 
-                    # Save file to uploads directory
-                    file_path = upload_dir / file.filename
-                    with open(file_path, "wb") as f:
-                        f.write(file.file.read())
+            # Process the test file with both RAG systems
+            pandas_result = self.rag_system_pandas.ingest_file(test_file_path)
+            llamaparse_result = self.rag_system_llamaparse.ingest_file(test_file_path)
 
-                    # Process the file with RAG system
-                    result = self.rag_system.ingest_file(str(file_path))
+            # Check if both systems processed successfully
+            pandas_success = pandas_result.get("status") == "success"
+            llamaparse_success = llamaparse_result.get("status") == "success"
 
-                    if result.get("status") == "success":
-                        uploaded_files.append(
-                            {
-                                "filename": file.filename,
-                                "status": "success",
-                                "chunks": result.get("chunks_created", 0),
-                            }
-                        )
-                    else:
-                        uploaded_files.append(
-                            {
-                                "filename": file.filename,
-                                "status": "error",
-                                "error": result.get("error", "Unknown error"),
-                            }
-                        )
-
-                except Exception as e:
-                    uploaded_files.append(
-                        {"filename": file.filename, "status": "error", "error": str(e)}
-                    )
-
-            # Check if any files were successfully uploaded
-            successful_uploads = [f for f in uploaded_files if f["status"] == "success"]
-
-            if successful_uploads:
+            if pandas_success and llamaparse_success:
                 return JSONResponse(
                     {
                         "success": True,
-                        "message": f"Successfully uploaded {len(successful_uploads)} file(s)",
-                        "files": uploaded_files,
+                        "message": "Successfully ingested test file into both Pandas and LlamaParse systems",
+                        "files": [
+                            {
+                                "filename": "scotch_product_catalog.xlsx",
+                                "status": "success",
+                                "pandas_chunks": pandas_result.get("chunks_created", 0),
+                                "llamaparse_chunks": llamaparse_result.get(
+                                    "chunks_created", 0
+                                ),
+                                "message": "Successfully ingested into both systems",
+                            }
+                        ],
+                    }
+                )
+            elif pandas_success:
+                return JSONResponse(
+                    {
+                        "success": True,
+                        "message": "Successfully ingested test file into Pandas system",
+                        "files": [
+                            {
+                                "filename": "scotch_product_catalog.xlsx",
+                                "status": "partial_success",
+                                "pandas_chunks": pandas_result.get("chunks_created", 0),
+                                "llamaparse_error": llamaparse_result.get(
+                                    "error", "Unknown error"
+                                ),
+                                "message": "Successfully ingested into Pandas system, LlamaParse failed",
+                            }
+                        ],
                     }
                 )
             else:
                 return JSONResponse(
                     {
                         "success": False,
-                        "error": "No files were successfully processed",
-                        "files": uploaded_files,
+                        "error": "Failed to ingest test file",
+                        "files": [
+                            {
+                                "filename": "scotch_product_catalog.xlsx",
+                                "status": "error",
+                                "pandas_error": pandas_result.get(
+                                    "error", "Unknown error"
+                                ),
+                                "llamaparse_error": llamaparse_result.get(
+                                    "error", "Unknown error"
+                                ),
+                                "message": "Failed to ingest into both systems",
+                            }
+                        ],
                     }
                 )
 
@@ -904,7 +1012,7 @@ class ScotchRAGApp:
             logger.error(f"Upload error: {e}")
             return JSONResponse({"success": False, "error": str(e)})
 
-    def api_ask(self, request):
+    def api_ask(self, request, parser_type="pandas"):
         """Handle question asking API endpoint."""
         try:
             # Extract question from request
@@ -970,8 +1078,11 @@ class ScotchRAGApp:
 
             logger.info(f"Processing question: {question}")
 
-            # Get answer from RAG system
-            result = self.rag_system.query(question)
+            # Get answer from appropriate RAG system
+            if parser_type == "llamaparse":
+                result = self.rag_system_llamaparse.query(question)
+            else:
+                result = self.rag_system_pandas.query(question)
 
             logger.info(f"RAG result status: {result.get('status')}")
 
@@ -993,7 +1104,12 @@ class ScotchRAGApp:
     def api_status(self):
         """Get system status API endpoint."""
         try:
-            stats = self.rag_system.get_stats()
+            # Get stats from both systems
+            stats_pandas = self.rag_system_pandas.get_stats()
+            stats_llamaparse = self.rag_system_llamaparse.get_stats()
+
+            # Use pandas stats for now (could be enhanced to show both)
+            stats = stats_pandas
 
             return JSONResponse(
                 {
@@ -1028,14 +1144,17 @@ class ScotchRAGApp:
             logger.error("Application not initialized")
 
 
-def create_app(rag_system: RAGSystem) -> ScotchRAGApp:
+def create_app(
+    rag_system_pandas: RAGSystem, rag_system_llamaparse: RAGSystemLlamaParse
+) -> ScotchRAGApp:
     """
     Create and return a Scotch-RAG application instance.
 
     Args:
-        rag_system: Initialized RAG system instance
+        rag_system_pandas: Initialized pandas-based RAG system instance
+        rag_system_llamaparse: Initialized LlamaParse-based RAG system instance
 
     Returns:
         ScotchRAGApp instance
     """
-    return ScotchRAGApp(rag_system)
+    return ScotchRAGApp(rag_system_pandas, rag_system_llamaparse)

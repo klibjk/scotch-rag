@@ -60,3 +60,6 @@ logs/
 *.pem
 
 *.zip
+
+# Documentation and organization files
+ORGANIZATION_SUMMARY.md

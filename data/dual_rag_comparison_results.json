@@ -1,0 +1,86 @@
+{
+  "test_file": "rag/data/scotch_product_catalog.xlsx",
+  "ingestion_comparison": {
+    "pandas": {
+      "time": 2.326340675354004,
+      "chunks": 11,
+      "characters": 3534
+    },
+    "llamaparse": {
+      "time": 1.0879027843475342,
+      "chunks": 15,
+      "characters": 5730
+    }
+  },
+  "query_results": {
+    "pandas": [
+      {
+        "question": "How many products are in the catalog?",
+        "answer": "The main catalog (scotch_product_catalog.csv) contains 95 rows \u2014 so 95 products. (There is a separate sheet named \"\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e2a\u0e34\u0e19\u0e04\u0e49\u0e32 (\u0e22\u0e48\u0e2d)\" with 97 rows if that's what you meant.)",
+        "time": 5.6101226806640625,
+        "answer_length": 174
+      },
+      {
+        "question": "What is the first product in the catalog?",
+        "answer": "I don't know. The sheet and column names were provided, but the actual rows/values were not included. To find the first product, open scotch_product_catalog.csv and look at the first data row under the \"Product Name\" column (or the first entry under \"\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e2a\u0e34\u0e19\u0e04\u0e49\u0e32\" in the Thai sheet).",
+        "time": 8.2562575340271,
+        "answer_length": 284
+      },
+      {
+        "question": "What is the second product in the catalog?",
+        "answer": "I don't know \u2014 the actual product rows from the catalog file weren't provided in your message.\n\nIf you have the CSV, you can find the second product quickly. Examples:\n\n- In Python/pandas:\n  df = pd.read_csv('scotch_product_catalog.csv')\n  second = df['Product Name'].iloc[1]\n  print(second)\n\n- In Excel/Sheets: open the file and look at the second data row in the \"Product Name\" column.\n\n- On the command line (if header is first line and Product Name is the 2nd column):\n  awk -F, 'NR==3{print $2}' scotch_product_catalog.csv\n\nIf you paste the first few rows (or the Product Name column) here I can tell you which is the second product.",
+        "time": 10.20145869255066,
+        "answer_length": 638
+      },
+      {
+        "question": "What products contain 'Scot' in the name?",
+        "answer": "The product names that include \"Scot\" are:\n\n- Scot Bird's Nest Royal Gold B3 Plus 40ml (Pack of 6 bottles) (Scot Bird's Nest 6 bottles) x 4\n- Scot Bird's Nest Royal Gold B3 Plus 70ml (Pack of 6 bottles) (Scot Bird's Nest 6 bottles) x 4",
+        "time": 6.935899257659912,
+        "answer_length": 235
+      },
+      {
+        "question": "What is the most expensive product?",
+        "answer": "I don't know \u2014 the data you gave doesn't include any prices, so I can't tell which product is most expensive. The entries shown are:\n\n- Scot Bird's Nest Royal Gold Manuka Honey 42ml (pack of 6)\n- Scot Bird's Nest Royal Gold Lavender Plus 40ml (pack of 6)\n- Scot Bird's Nest Gold Selection 90ml (pack of 1)\n\nIf you provide the prices (or the full dataset including price fields), I can determine the most expensive item.",
+        "time": 5.2447309494018555,
+        "answer_length": 419
+      },
+      {
+        "question": "What is the cheapest product?",
+        "answer": "I don't know \u2014 the provided data lists product names and details but contains no prices. If you give the prices (or a link/source with prices), I can tell you which is cheapest.",
+        "time": 4.981267690658569,
+        "answer_length": 177
+      },
+      {
+        "question": "How many products are priced under $50?",
+        "answer": "I don't know \u2014 the file metadata you gave doesn't include the prices themselves, so I can't count how many products are under $50.\n\nIf you want to find that count yourself, here are two quick ways:\n\n1) Using Python / pandas\n- Replace 'Price' with the actual column name that contains prices.\n\nimport pandas as pd\ndf = pd.read_csv('scotch_product_catalog.csv')  # or the correct path\n# if prices include a dollar sign, remove it and convert to float\ndf['price_num'] = df['Price'].replace(r'[\\$,]', '', regex=True).astype(float)\nunder_50 = (df['price_num'] < 50).sum()\nprint(under_50)\n\n2) Using Excel / Google Sheets\n- If prices are in column C (adjust as needed), add a helper column D with:\n=VALUE(SUBSTITUTE(C2,\"$\",\"\"))\n- Copy down, then use:\n=COUNTIF(D:D,\"<50\")\n\nIf you can share the file or paste the price column (or tell me the column name that contains prices), I can compute the exact number for you.",
+        "time": 8.381059646606445,
+        "answer_length": 907
+      },
+      {
+        "question": "What is the average price of products?",
+        "answer": "I don\u2019t know \u2014 the excerpt you gave doesn\u2019t include any price values or a price column, so I can\u2019t compute an average from it.\n\nIf you can share the column (or the file) that contains prices, I can calculate it. Meanwhile you can compute it yourself:\n\n- In Excel / Google Sheets: if prices are in column D rows 2\u201396, use\n  =AVERAGE(D2:D96)\n\n- In Python (pandas):\n  import pandas as pd\n  df = pd.read_csv('scotch_product_catalog.csv')\n  df['Price'] = pd.to_numeric(df['Price'], errors='coerce')  # adjust column name\n  df['Price'].mean()\n\nSend the CSV or tell me which column contains prices and I\u2019ll compute the average.",
+        "time": 6.9974963665008545,
+        "answer_length": 620
+      },
+      {
+        "question": "List all products with 'Royal' in the name",
+        "answer": "From the provided data, these product names contain \"Royal\":\n\n- Scot Bird's Nest Royal Gold B3 Plus 70ml (Pack of 6 bottles) (Scot Bird's Nest 6 bottles) x 1\n- Scot Bird's Nest Royal Gold B3 Plus 70ml (Pack of 6 bottles) (Scot Bird's Nest 6 bottles) x 2\n\nIf you want me to check the whole file for other \"Royal\" entries, please provide the remaining rows or the full sheet.",
+        "time": 6.6047797203063965,
+        "answer_length": 373
+      },
+      {
+        "question": "What is the total number of items across all products?",
+        "answer": "I don't have the data needed to compute a total number of items per product. The context you gave only lists sheet names and row counts, not any \"quantity\" or \"items\" column.\n\nWhat I do have:\n- scotch_product_catalog.csv \u2014 Total rows: 95\n- \u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e2a\u0e34\u0e19\u0e04\u0e49\u0e32 (\u0e22\u0e48\u0e2d) \u2014 Total rows: 97\n\nIf by \"total number of items\" you mean the number of product rows, tell me which sheet you want to count (and whether the header row should be excluded). If you mean the sum of a quantity column, please tell me the column name (or share the rows/column values) and I can sum them.",
+        "time": 9.790289402008057,
+        "answer_length": 557
+      }
+    ],
+    "llamaparse": []
+  },
+  "summary": {
+    "pandas_avg_time": 7.300336194038391,
+    "llamaparse_avg_time": 0,
+    "pandas_avg_length": 438.4,
+    "llamaparse_avg_length": 0
+  }
+}
